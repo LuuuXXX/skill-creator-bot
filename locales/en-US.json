@@ -49,6 +49,7 @@
   "eval.skip_hint": "Tip: use --skip to skip eval running.",
   "eval.engine_missing_command": "When using --engine custom, you must also provide --engine-command <command>",
   "eval.engine_not_found": "Engine command '{command}' not found. Make sure it is installed and available in PATH.",
+  "eval.evals_load_failed": "Could not load evals/evals.json. Make sure the file exists and is valid JSON.",
 
   "common.error": "error",
   "common.warning": "Warning",

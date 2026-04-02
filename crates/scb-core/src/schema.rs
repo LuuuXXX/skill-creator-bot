@@ -31,13 +31,13 @@ impl Default for EvalsSchema {
             evals: vec![
                 EvalItem {
                     id: "eval-001".to_string(),
-                    prompt: "".to_string(),
+                    prompt: "Your test prompt here".to_string(),
                     assertions: Vec::new(),
                     tags: vec!["should-trigger".to_string()],
                 },
                 EvalItem {
                     id: "eval-002".to_string(),
-                    prompt: "".to_string(),
+                    prompt: "Your test prompt here".to_string(),
                     assertions: Vec::new(),
                     tags: vec!["should-trigger".to_string()],
                 },

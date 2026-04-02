@@ -56,7 +56,8 @@ pub fn run(args: EvalArgs, i18n: &I18n) -> anyhow::Result<()> {
 
 fn run_list(args: EvalListArgs, i18n: &I18n) -> anyhow::Result<()> {
     let evals_path = args.path.join("evals").join("evals.json");
-    let schema = EvalsSchema::load(&evals_path)?;
+    let schema = EvalsSchema::load(&evals_path)
+        .map_err(|_| anyhow::anyhow!("{}", i18n.t("eval.evals_load_failed")))?;
 
     println!("{}", i18n.t("eval.list_header").cyan().bold());
     for item in &schema.evals {
@@ -79,6 +80,12 @@ fn run_evals(args: EvalRunArgs, i18n: &I18n) -> anyhow::Result<()> {
     }
 
     let engine_def = build_engine(&args.engine, args.engine_command.as_deref(), i18n)?;
+
+    // Verify evals/evals.json is loadable before starting the engine run,
+    // so the user gets a localized error rather than an English anyhow string.
+    let evals_path = args.path.join("evals").join("evals.json");
+    EvalsSchema::load(&evals_path)
+        .map_err(|_| anyhow::anyhow!("{}", i18n.t("eval.evals_load_failed")))?;
 
     let msg = i18n
         .t("eval.run_start")
