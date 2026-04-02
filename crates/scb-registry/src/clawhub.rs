@@ -32,7 +32,7 @@ impl RegistryProvider for ClawHubProvider {
         let output = Command::new("clawhub")
             .arg("whoami")
             .output()
-            .map_err(|e| PreflightError::Other(format!("Failed to run `clawhub whoami`: {}", e)))?;
+            .map_err(|e| PreflightError::Other(Box::new(e)))?;
 
         if !output.status.success() {
             return Err(PreflightError::NotAuthenticated(

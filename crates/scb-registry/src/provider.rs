@@ -30,22 +30,25 @@ pub struct PublishResult {
 ///
 /// Using a typed enum lets callers select the right localized message without
 /// fragile substring matching on English error text.
+///
+/// `Other` carries the raw underlying error so the CLI layer can append the
+/// OS/tool detail to a localized prefix rather than embedding English strings
+/// in the registry layer.
 #[derive(Debug)]
 pub enum PreflightError {
     /// The required CLI tool is not installed or not in PATH.
     CliNotFound(String),
     /// The user is not authenticated with the registry.
     NotAuthenticated(String),
-    /// Any other preflight failure.
-    Other(String),
+    /// Any other preflight failure (carries the raw source error).
+    Other(Box<dyn std::error::Error + Send + Sync>),
 }
 
 impl std::fmt::Display for PreflightError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::CliNotFound(msg) | Self::NotAuthenticated(msg) | Self::Other(msg) => {
-                write!(f, "{}", msg)
-            }
+            Self::CliNotFound(msg) | Self::NotAuthenticated(msg) => write!(f, "{}", msg),
+            Self::Other(e) => write!(f, "{}", e),
         }
     }
 }
