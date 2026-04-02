@@ -38,7 +38,10 @@ pub struct PublishArgs {
 }
 
 pub fn run(args: PublishArgs, i18n: &I18n) -> anyhow::Result<()> {
-    let provider: Box<dyn RegistryProvider> = match args.registry.to_lowercase().as_str() {
+    // Normalize registry to lowercase once; this is the canonical id persisted
+    // in scb.project.json and used for display/dispatch throughout.
+    let registry_id = args.registry.to_lowercase();
+    let provider: Box<dyn RegistryProvider> = match registry_id.as_str() {
         "clawhub" => Box::new(ClawHubProvider),
         other => {
             let msg = i18n
@@ -90,7 +93,9 @@ pub fn run(args: PublishArgs, i18n: &I18n) -> anyhow::Result<()> {
             match ProjectConfig::load(&args.path) {
                 Ok(mut config) => {
                     config.last_publish = Some(PublishRecord {
-                        registry: args.registry.clone(),
+                        // Persist the canonical lowercase id rather than the
+                        // user-supplied casing so future comparisons are consistent.
+                        registry: registry_id.clone(),
                         slug: result.slug.clone(),
                         version: result.version.clone(),
                         published_at: unix_epoch_seconds_now(),

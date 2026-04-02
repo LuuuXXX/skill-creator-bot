@@ -39,15 +39,15 @@ pub fn scaffold_skill(
 
     // Generate scb.project.json — canonicalize so the stored path is absolute
     // and independent of the working directory from which scb was invoked.
-    let canonical_dir = skill_dir
-        .canonicalize()
-        .unwrap_or_else(|_| skill_dir.clone());
-    let mut project = ProjectConfig::new(skill_name, canonical_dir);
+    // The directory was just created, so canonicalize should always succeed;
+    // we fail fast rather than silently falling back to a relative path.
+    let canonical_dir = skill_dir.canonicalize()?;
+    let mut project = ProjectConfig::new(skill_name, canonical_dir.clone());
     // Persist the language so future commands default to the same locale.
     project.lang = lang.clone();
     project.save()?;
 
-    Ok(skill_dir)
+    Ok(canonical_dir)
 }
 
 fn generate_skill_md(skill_name: &str, lang: &Lang) -> String {
