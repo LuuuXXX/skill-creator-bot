@@ -85,17 +85,25 @@ pub fn run(args: PublishArgs, i18n: &I18n) -> anyhow::Result<()> {
                 println!("{}", i18n.t("publish.slug").replace("{slug}", &result.slug));
             }
 
-            // Persist publish metadata
-            if let Ok(mut config) = ProjectConfig::load(&args.path) {
-                config.last_publish = Some(PublishRecord {
-                    registry: args.registry.clone(),
-                    slug: result.slug.clone(),
-                    version: result.version.clone(),
-                    published_at: unix_epoch_seconds_now(),
-                    url: result.url.clone(),
-                });
-                if config.save().is_ok() {
-                    println!("{}", i18n.t("publish.saved").dimmed());
+            // Persist publish metadata; warn if load or save fails so the user
+            // knows to fix the config and can recover the metadata manually.
+            match ProjectConfig::load(&args.path) {
+                Ok(mut config) => {
+                    config.last_publish = Some(PublishRecord {
+                        registry: args.registry.clone(),
+                        slug: result.slug.clone(),
+                        version: result.version.clone(),
+                        published_at: unix_epoch_seconds_now(),
+                        url: result.url.clone(),
+                    });
+                    if let Err(e) = config.save() {
+                        eprintln!("{}: {}", i18n.t("publish.save_failed"), e);
+                    } else {
+                        println!("{}", i18n.t("publish.saved").dimmed());
+                    }
+                }
+                Err(e) => {
+                    eprintln!("{}: {}", i18n.t("publish.load_failed"), e);
                 }
             }
         }

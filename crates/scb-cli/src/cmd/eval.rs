@@ -33,8 +33,8 @@ pub struct EvalRunArgs {
     #[arg(short, long, default_value = ".")]
     pub path: PathBuf,
 
-    /// Engine to use (e.g. "claude-cli" or a custom command)
-    #[arg(long, default_value = "claude-cli")]
+    /// Engine to use: "claude-cli" or "custom"
+    #[arg(long, default_value = "claude-cli", value_parser = ["claude-cli", "custom"])]
     pub engine: String,
 
     /// Custom command for the engine (used when --engine custom)
@@ -77,7 +77,7 @@ fn run_evals(args: EvalRunArgs, i18n: &I18n) -> anyhow::Result<()> {
         return Ok(());
     }
 
-    let engine_def = build_engine(&args.engine, args.engine_command.as_deref())?;
+    let engine_def = build_engine(&args.engine, args.engine_command.as_deref(), i18n)?;
 
     let msg = i18n
         .t("eval.run_start")
@@ -108,28 +108,25 @@ fn run_evals(args: EvalRunArgs, i18n: &I18n) -> anyhow::Result<()> {
             println!("{}", i18n.t("eval.run_done").green().bold());
         }
         Err(e) => {
-            println!("{} {}", i18n.t("common.error").red().bold(), e);
-            anyhow::bail!("eval run failed");
+            // Propagate the error to main's handler for a single, localized
+            // error line — don't print here too.
+            return Err(e);
         }
     }
 
     Ok(())
 }
 
-fn build_engine(engine_id: &str, custom_cmd: Option<&str>) -> anyhow::Result<EngineDefinition> {
+fn build_engine(engine_id: &str, custom_cmd: Option<&str>, i18n: &I18n) -> anyhow::Result<EngineDefinition> {
     match engine_id {
         "claude-cli" => Ok(EngineDefinition::claude_cli()),
-        "custom" => {
+        // clap's value_parser restricts --engine to "claude-cli" | "custom", so
+        // the "custom" arm is the only other reachable case here.
+        _ => {
             let cmd = custom_cmd.ok_or_else(|| {
-                anyhow::anyhow!(
-                    "When using --engine custom, you must also provide --engine-command <command>"
-                )
+                anyhow::anyhow!("{}", i18n.t("eval.engine_missing_command"))
             })?;
             Ok(EngineDefinition::custom(cmd, &["{prompt}"]))
         }
-        other => anyhow::bail!(
-            "Unknown engine '{}'. Supported values: claude-cli, custom",
-            other
-        ),
     }
 }

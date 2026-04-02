@@ -2,11 +2,16 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 /// Supported UI languages.
+///
+/// The canonical on-disk representation matches the CLI flag values (`zh-CN` /
+/// `en-US`).  Lowercase aliases (`zh-cn` / `en-us`) are accepted when reading
+/// so that configs written by older versions of `scb` remain valid.
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "kebab-case")]
 pub enum Lang {
     #[default]
+    #[serde(rename = "zh-CN", alias = "zh-cn")]
     ZhCn,
+    #[serde(rename = "en-US", alias = "en-us")]
     EnUs,
 }
 
