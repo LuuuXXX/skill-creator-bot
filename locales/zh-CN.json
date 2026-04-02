@@ -10,6 +10,18 @@
   "validate.warnings": "警告：",
   "validate.failed": "验证失败，请修复上述错误后重试。",
 
+  "validate.issue.skill_md_not_found": "技能目录中未找到 SKILL.md",
+  "validate.issue.frontmatter_missing": "SKILL.md 缺少 YAML 前置内容（必须以 '---' 开头）",
+  "validate.issue.frontmatter_not_closed": "SKILL.md 前置内容未以 '---' 结尾",
+  "validate.issue.frontmatter_missing_name": "SKILL.md 前置内容缺少 'name' 字段",
+  "validate.issue.frontmatter_missing_description": "SKILL.md 前置内容缺少 'description' 字段",
+  "validate.issue.frontmatter_missing_version": "SKILL.md 前置内容缺少 'version' 字段（推荐填写）",
+  "validate.issue.frontmatter_missing_compatibility": "SKILL.md 前置内容缺少 'compatibility' 字段（推荐填写）",
+  "validate.issue.evals_json_not_found": "未找到 evals/evals.json（推荐创建）",
+  "validate.issue.evals_json_invalid": "evals/evals.json 格式无效：{detail}",
+  "validate.issue.evals_json_empty": "evals/evals.json 中没有评测项",
+  "validate.issue.project_json_not_found": "未找到 scb.project.json（请运行 `scb init` 创建）",
+
   "publish.preflight": "正在检查发布环境...",
   "publish.publishing": "正在发布到 {registry}...",
   "publish.success": "发布成功！",

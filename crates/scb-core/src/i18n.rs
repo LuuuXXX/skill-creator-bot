@@ -39,13 +39,18 @@ pub struct I18n {
 
 impl I18n {
     /// Load translations from the embedded locale JSON bundles.
+    ///
+    /// # Panics
+    /// Panics if the embedded locale JSON is malformed. This catches broken locale
+    /// files at startup (or in CI) rather than silently falling back to an empty map
+    /// that would cause the CLI to print raw keys at runtime.
     pub fn load(lang: &Lang) -> Self {
         let raw = match lang {
             Lang::ZhCn => include_str!("../../../locales/zh-CN.json"),
             Lang::EnUs => include_str!("../../../locales/en-US.json"),
         };
-        let messages: HashMap<String, String> =
-            serde_json::from_str(raw).unwrap_or_default();
+        let messages: HashMap<String, String> = serde_json::from_str(raw)
+            .unwrap_or_else(|e| panic!("Embedded locale JSON for '{}' is invalid: {}", lang, e));
         Self {
             messages,
             lang: lang.clone(),
@@ -53,6 +58,10 @@ impl I18n {
     }
 
     /// Look up a message key, falling back to the key itself if missing.
+    ///
+    /// The explicit shared lifetime ensures the compiler knows the return value
+    /// may come from either `self.messages` or the `key` argument — both need
+    /// to outlive the returned `&str`.
     pub fn t<'a>(&'a self, key: &'a str) -> &'a str {
         self.messages.get(key).map(|s| s.as_str()).unwrap_or(key)
     }

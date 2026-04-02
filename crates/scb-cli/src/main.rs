@@ -49,7 +49,7 @@ fn main() {
     };
 
     if let Err(e) = result {
-        eprintln!("{}: {}", "error".red(), e);
+        eprintln!("{}: {}", i18n.t("common.error").red(), e);
         std::process::exit(1);
     }
 }

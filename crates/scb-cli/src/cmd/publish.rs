@@ -90,7 +90,7 @@ pub fn run(args: PublishArgs, i18n: &I18n) -> anyhow::Result<()> {
                     registry: args.registry.clone(),
                     slug: result.slug.clone(),
                     version: result.version.clone(),
-                    published_at: chrono_now(),
+                    published_at: unix_epoch_seconds_now(),
                     url: result.url.clone(),
                 });
                 if config.save().is_ok() {
@@ -108,7 +108,7 @@ pub fn run(args: PublishArgs, i18n: &I18n) -> anyhow::Result<()> {
 }
 
 /// Return the current time as a UNIX epoch seconds string.
-fn chrono_now() -> String {
+fn unix_epoch_seconds_now() -> String {
     let secs = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .unwrap_or_default()

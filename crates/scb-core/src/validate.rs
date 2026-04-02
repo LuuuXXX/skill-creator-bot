@@ -1,10 +1,71 @@
 use std::path::Path;
 
+/// A structured validation issue returned by scb-core.
+///
+/// Each variant corresponds to a specific problem found during validation.
+/// Callers (e.g. scb-cli) map variants to localized user-facing messages via
+/// `ValidationIssue::i18n_key()` and optional `detail()` substitution.
+#[derive(Debug, Clone)]
+pub enum ValidationIssue {
+    /// SKILL.md is not present in the skill directory.
+    SkillMdNotFound,
+    /// SKILL.md does not begin with a YAML frontmatter opening delimiter (`---`).
+    FrontmatterMissing,
+    /// SKILL.md frontmatter is not closed with a second `---` delimiter.
+    FrontmatterNotClosed,
+    /// The `name` key is absent from the frontmatter.
+    FrontmatterMissingName,
+    /// The `description` key is absent from the frontmatter.
+    FrontmatterMissingDescription,
+    /// The `version` key is absent (recommended).
+    FrontmatterMissingVersion,
+    /// The `compatibility` key is absent (recommended).
+    FrontmatterMissingCompatibility,
+    /// `evals/evals.json` is not present (recommended).
+    EvalsJsonNotFound,
+    /// `evals/evals.json` could not be parsed; contains the underlying error.
+    EvalsJsonInvalid(String),
+    /// `evals/evals.json` contains no eval items.
+    EvalsJsonEmpty,
+    /// `scb.project.json` is not present (recommended).
+    ProjectJsonNotFound,
+}
+
+impl ValidationIssue {
+    /// Returns the i18n key used to look up the localized message for this issue.
+    pub fn i18n_key(&self) -> &'static str {
+        match self {
+            Self::SkillMdNotFound => "validate.issue.skill_md_not_found",
+            Self::FrontmatterMissing => "validate.issue.frontmatter_missing",
+            Self::FrontmatterNotClosed => "validate.issue.frontmatter_not_closed",
+            Self::FrontmatterMissingName => "validate.issue.frontmatter_missing_name",
+            Self::FrontmatterMissingDescription => "validate.issue.frontmatter_missing_description",
+            Self::FrontmatterMissingVersion => "validate.issue.frontmatter_missing_version",
+            Self::FrontmatterMissingCompatibility => "validate.issue.frontmatter_missing_compatibility",
+            Self::EvalsJsonNotFound => "validate.issue.evals_json_not_found",
+            Self::EvalsJsonInvalid(_) => "validate.issue.evals_json_invalid",
+            Self::EvalsJsonEmpty => "validate.issue.evals_json_empty",
+            Self::ProjectJsonNotFound => "validate.issue.project_json_not_found",
+        }
+    }
+
+    /// Returns an optional detail string for issues with dynamic content.
+    ///
+    /// When non-`None`, callers should substitute `{detail}` in the localized
+    /// message template with this value.
+    pub fn detail(&self) -> Option<&str> {
+        match self {
+            Self::EvalsJsonInvalid(d) => Some(d.as_str()),
+            _ => None,
+        }
+    }
+}
+
 /// Validation result for a skill directory.
 #[derive(Debug, Default)]
 pub struct ValidationResult {
-    pub errors: Vec<String>,
-    pub warnings: Vec<String>,
+    pub errors: Vec<ValidationIssue>,
+    pub warnings: Vec<ValidationIssue>,
 }
 
 impl ValidationResult {
@@ -12,12 +73,12 @@ impl ValidationResult {
         self.errors.is_empty()
     }
 
-    pub fn error(&mut self, msg: impl Into<String>) {
-        self.errors.push(msg.into());
+    pub fn error(&mut self, issue: ValidationIssue) {
+        self.errors.push(issue);
     }
 
-    pub fn warn(&mut self, msg: impl Into<String>) {
-        self.warnings.push(msg.into());
+    pub fn warn(&mut self, issue: ValidationIssue) {
+        self.warnings.push(issue);
     }
 }
 
@@ -28,7 +89,7 @@ pub fn validate_skill(skill_dir: &Path) -> anyhow::Result<ValidationResult> {
     // Check SKILL.md exists
     let skill_md = skill_dir.join("SKILL.md");
     if !skill_md.exists() {
-        result.error("SKILL.md not found in skill directory");
+        result.error(ValidationIssue::SkillMdNotFound);
         return Ok(result);
     }
 
@@ -39,22 +100,22 @@ pub fn validate_skill(skill_dir: &Path) -> anyhow::Result<ValidationResult> {
     // Check evals/evals.json
     let evals_json = skill_dir.join("evals").join("evals.json");
     if !evals_json.exists() {
-        result.warn("evals/evals.json not found (recommended)");
+        result.warn(ValidationIssue::EvalsJsonNotFound);
     } else {
         match crate::schema::EvalsSchema::load(&evals_json) {
             Ok(schema) => {
                 if schema.evals.is_empty() {
-                    result.warn("evals/evals.json has no eval items");
+                    result.warn(ValidationIssue::EvalsJsonEmpty);
                 }
             }
-            Err(e) => result.error(format!("evals/evals.json is invalid: {}", e)),
+            Err(e) => result.error(ValidationIssue::EvalsJsonInvalid(e.to_string())),
         }
     }
 
     // Check scb.project.json
     let project_json = skill_dir.join("scb.project.json");
     if !project_json.exists() {
-        result.warn("scb.project.json not found (run `scb init` to create it)");
+        result.warn(ValidationIssue::ProjectJsonNotFound);
     }
 
     Ok(result)
@@ -65,7 +126,7 @@ fn validate_frontmatter(content: &str, result: &mut ValidationResult) {
     let content = content.replace("\r\n", "\n");
 
     if !content.starts_with("---") {
-        result.error("SKILL.md is missing YAML frontmatter (must start with '---')");
+        result.error(ValidationIssue::FrontmatterMissing);
         return;
     }
 
@@ -84,7 +145,7 @@ fn validate_frontmatter(content: &str, result: &mut ValidationResult) {
     let end = match end {
         Some(pos) => pos,
         None => {
-            result.error("SKILL.md frontmatter is not closed with '---'");
+            result.error(ValidationIssue::FrontmatterNotClosed);
             return;
         }
     };
@@ -105,18 +166,18 @@ fn validate_frontmatter(content: &str, result: &mut ValidationResult) {
 
     // Check required fields
     if !has_field("name") {
-        result.error("SKILL.md frontmatter is missing 'name' field");
+        result.error(ValidationIssue::FrontmatterMissingName);
     }
     if !has_field("description") {
-        result.error("SKILL.md frontmatter is missing 'description' field");
+        result.error(ValidationIssue::FrontmatterMissingDescription);
     }
 
     // Warn about optional but recommended fields
     if !has_field("version") {
-        result.warn("SKILL.md frontmatter is missing 'version' field (recommended)");
+        result.warn(ValidationIssue::FrontmatterMissingVersion);
     }
     if !has_field("compatibility") {
-        result.warn("SKILL.md frontmatter is missing 'compatibility' field (recommended)");
+        result.warn(ValidationIssue::FrontmatterMissingCompatibility);
     }
 }
 
@@ -153,7 +214,7 @@ mod tests {
         fs::create_dir_all(&dir).unwrap();
         let result = validate_skill(&dir).unwrap();
         assert!(!result.is_valid());
-        assert!(result.errors.iter().any(|e| e.contains("SKILL.md")));
+        assert!(result.errors.iter().any(|e| matches!(e, ValidationIssue::SkillMdNotFound)));
     }
 
     #[test]
@@ -164,7 +225,7 @@ mod tests {
         fs::write(dir.join("SKILL.md"), "# No frontmatter here\n").unwrap();
         let result = validate_skill(&dir).unwrap();
         assert!(!result.is_valid());
-        assert!(result.errors.iter().any(|e| e.contains("frontmatter")));
+        assert!(result.errors.iter().any(|e| matches!(e, ValidationIssue::FrontmatterMissing)));
     }
 
     #[test]
@@ -193,6 +254,6 @@ mod tests {
         fs::write(dir.join("evals").join("evals.json"), evals).unwrap();
         let result = validate_skill(&dir).unwrap();
         assert!(!result.is_valid(), "Should report missing 'name' key");
-        assert!(result.errors.iter().any(|e| e.contains("'name'")));
+        assert!(result.errors.iter().any(|e| matches!(e, ValidationIssue::FrontmatterMissingName)));
     }
 }
