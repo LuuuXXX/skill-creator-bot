@@ -61,9 +61,10 @@ pub fn run(args: PackageArgs, i18n: &I18n) -> anyhow::Result<()> {
         }
     }
 
+    let script_path = args.path.join("scripts").join("package_skill.py");
     let hint = i18n
         .t("package.python_hint")
-        .replace("{path}", &args.path.to_string_lossy())
+        .replace("{path}", &script_path.to_string_lossy())
         .replace("{python_cmd}", &python_cmd);
     println!("\n{}", hint.dimmed());
 

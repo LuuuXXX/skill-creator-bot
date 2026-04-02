@@ -1,7 +1,6 @@
 use std::path::Path;
 use std::process::Command;
 
-use anyhow::Context;
 use which::which;
 
 use crate::provider::{PreflightError, PublishMetadata, PublishResult, RegistryProvider};
@@ -62,11 +61,11 @@ impl RegistryProvider for ClawHubProvider {
             cmd.arg("--tag").arg(tag);
         }
 
-        let output = cmd.output().context("Failed to run `clawhub publish`")?;
+        let output = cmd.output()?;
 
         if !output.status.success() {
             let stderr = String::from_utf8_lossy(&output.stderr);
-            anyhow::bail!("clawhub publish failed:\n{}", stderr.trim());
+            anyhow::bail!("{}", stderr.trim());
         }
 
         let stdout = String::from_utf8_lossy(&output.stdout);
