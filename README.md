@@ -30,7 +30,7 @@ locales/
 
 ### Requirements
 
-- [Rust 1.70+](https://rustup.rs/)
+- [Rust toolchain](https://rustup.rs/)
 
 ```bash
 git clone https://github.com/LuuuXXX/skill-creator-bot

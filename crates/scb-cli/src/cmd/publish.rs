@@ -104,9 +104,8 @@ pub fn run(args: PublishArgs, i18n: &I18n) -> anyhow::Result<()> {
     Ok(())
 }
 
-/// Return an RFC3339-like timestamp without pulling in a heavy datetime crate.
+/// Return the current time as a UNIX epoch seconds string.
 fn chrono_now() -> String {
-    // Use UNIX timestamp as a simple fallback.
     let secs = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .unwrap_or_default()

@@ -11,8 +11,8 @@ use scb_core::i18n::{I18n, Lang};
     version
 )]
 struct Cli {
-    /// UI language (zh-CN or en-US). Default: zh-CN
-    #[arg(long, global = true, default_value = "zh-CN")]
+    /// UI language: zh-CN (default) or en-US
+    #[arg(long, global = true, default_value = "zh-CN", value_parser = ["zh-CN", "en-US"])]
     lang: String,
 
     #[command(subcommand)]

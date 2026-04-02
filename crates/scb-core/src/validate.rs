@@ -61,6 +61,9 @@ pub fn validate_skill(skill_dir: &Path) -> anyhow::Result<ValidationResult> {
 }
 
 fn validate_frontmatter(content: &str, result: &mut ValidationResult) {
+    // Normalize CRLF so the parser works on both Windows and Unix line endings.
+    let content = content.replace("\r\n", "\n");
+
     if !content.starts_with("---") {
         result.error("SKILL.md is missing YAML frontmatter (must start with '---')");
         return;
@@ -87,19 +90,32 @@ fn validate_frontmatter(content: &str, result: &mut ValidationResult) {
     };
     let frontmatter = &after_open[..end];
 
+    // Check whether a YAML key is present as an actual key (not a substring of another key).
+    // e.g. "username:" must not satisfy a search for "name:".
+    let has_field = |key: &str| {
+        frontmatter.lines().any(|line| {
+            let trimmed = line.trim_start();
+            if let Some((k, _rest)) = trimmed.split_once(':') {
+                k.trim() == key
+            } else {
+                false
+            }
+        })
+    };
+
     // Check required fields
-    if !frontmatter.contains("name:") {
+    if !has_field("name") {
         result.error("SKILL.md frontmatter is missing 'name' field");
     }
-    if !frontmatter.contains("description:") {
+    if !has_field("description") {
         result.error("SKILL.md frontmatter is missing 'description' field");
     }
 
     // Warn about optional but recommended fields
-    if !frontmatter.contains("version:") {
+    if !has_field("version") {
         result.warn("SKILL.md frontmatter is missing 'version' field (recommended)");
     }
-    if !frontmatter.contains("compatibility:") {
+    if !has_field("compatibility") {
         result.warn("SKILL.md frontmatter is missing 'compatibility' field (recommended)");
     }
 }
@@ -149,5 +165,34 @@ mod tests {
         let result = validate_skill(&dir).unwrap();
         assert!(!result.is_valid());
         assert!(result.errors.iter().any(|e| e.contains("frontmatter")));
+    }
+
+    #[test]
+    fn test_crlf_skill_passes() {
+        let dir = std::env::temp_dir().join("scb_test_crlf");
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(dir.join("evals")).unwrap();
+        // Simulate a CRLF file (Windows line endings).
+        let crlf = "---\r\nname: test\r\ndescription: A crlf skill\r\nversion: 0.1.0\r\n---\r\n# test\r\n";
+        fs::write(dir.join("SKILL.md"), crlf).unwrap();
+        let evals = r#"{"version":"1","evals":[]}"#;
+        fs::write(dir.join("evals").join("evals.json"), evals).unwrap();
+        let result = validate_skill(&dir).unwrap();
+        assert!(result.is_valid(), "CRLF file should be valid, got errors: {:?}", result.errors);
+    }
+
+    #[test]
+    fn test_no_false_positive_on_similar_keys() {
+        let dir = std::env::temp_dir().join("scb_test_similar_keys");
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(dir.join("evals")).unwrap();
+        // "username" contains "name" — should still fail because "name" key is absent.
+        let content = "---\nusername: test\ndescription: some desc\nversion: 0.1.0\n---\n# test\n";
+        fs::write(dir.join("SKILL.md"), content).unwrap();
+        let evals = r#"{"version":"1","evals":[]}"#;
+        fs::write(dir.join("evals").join("evals.json"), evals).unwrap();
+        let result = validate_skill(&dir).unwrap();
+        assert!(!result.is_valid(), "Should report missing 'name' key");
+        assert!(result.errors.iter().any(|e| e.contains("'name'")));
     }
 }

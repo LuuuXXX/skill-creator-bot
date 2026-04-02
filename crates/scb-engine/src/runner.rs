@@ -63,10 +63,20 @@ impl EvalRunner {
         let duration_ms = start.elapsed().as_millis();
         let exit_code = output.status.code();
         let stdout = String::from_utf8_lossy(&output.stdout).to_string();
+        let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+
+        // On failure, append stderr so error diagnostics are not silently dropped.
+        let mut combined_output = stdout;
+        if exit_code.unwrap_or(1) != 0 && !stderr.is_empty() {
+            if !combined_output.is_empty() && !combined_output.ends_with('\n') {
+                combined_output.push('\n');
+            }
+            combined_output.push_str(&stderr);
+        }
 
         Ok(EvalRunResult {
             eval_id: item.id.clone(),
-            output: stdout,
+            output: combined_output,
             exit_code,
             duration_ms,
         })

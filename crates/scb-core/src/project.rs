@@ -36,12 +36,17 @@ impl ProjectConfig {
     }
 
     /// Load from `scb.project.json` inside the given skill directory.
+    /// The `skill_dir` stored in the file is overridden with `skill_dir` so that
+    /// `save()` always writes back to the same directory, regardless of what was
+    /// originally persisted (e.g. a relative path from a different working directory).
     pub fn load(skill_dir: &std::path::Path) -> anyhow::Result<Self> {
         let path = skill_dir.join("scb.project.json");
         let data = std::fs::read_to_string(&path)
             .map_err(|e| anyhow::anyhow!("Cannot read {}: {}", path.display(), e))?;
-        let config: Self = serde_json::from_str(&data)
+        let mut config: Self = serde_json::from_str(&data)
             .map_err(|e| anyhow::anyhow!("Invalid scb.project.json: {}", e))?;
+        // Always use the caller-provided path so save() is idempotent.
+        config.skill_dir = skill_dir.to_path_buf();
         Ok(config)
     }
 

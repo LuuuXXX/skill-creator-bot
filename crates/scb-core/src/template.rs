@@ -25,8 +25,12 @@ pub fn scaffold_skill(
     let evals_json = serde_json::to_string_pretty(&evals)?;
     std::fs::write(skill_dir.join("evals").join("evals.json"), evals_json)?;
 
-    // Generate scb.project.json
-    let project = ProjectConfig::new(skill_name, skill_dir.clone());
+    // Generate scb.project.json — canonicalize so the stored path is absolute
+    // and independent of the working directory from which scb was invoked.
+    let canonical_dir = skill_dir
+        .canonicalize()
+        .unwrap_or_else(|_| skill_dir.clone());
+    let project = ProjectConfig::new(skill_name, canonical_dir);
     project.save()?;
 
     Ok(skill_dir)
