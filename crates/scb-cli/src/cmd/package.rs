@@ -36,6 +36,16 @@ pub fn run(args: PackageArgs, i18n: &I18n) -> anyhow::Result<()> {
             })
         });
 
+    // Determine which Python 3 command was found to use in the packaging hint.
+    let python_cmd = match &python_result {
+        Ok((path, true)) => path
+            .file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or("python3")
+            .to_string(),
+        _ => "python3".to_string(),
+    };
+
     match python_result {
         Ok((python_path, true)) => {
             let msg = i18n
@@ -53,7 +63,8 @@ pub fn run(args: PackageArgs, i18n: &I18n) -> anyhow::Result<()> {
 
     let hint = i18n
         .t("package.python_hint")
-        .replace("{path}", &args.path.to_string_lossy());
+        .replace("{path}", &args.path.to_string_lossy())
+        .replace("{python_cmd}", &python_cmd);
     println!("\n{}", hint.dimmed());
 
     Ok(())

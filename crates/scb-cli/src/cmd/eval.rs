@@ -43,7 +43,7 @@ pub struct EvalRunArgs {
     #[arg(long)]
     pub engine_command: Option<String>,
 
-    /// Skip running evals (print summary only)
+    /// Skip running evals (not yet fully implemented; prints a placeholder message)
     #[arg(long)]
     pub skip: bool,
 }
@@ -81,10 +81,10 @@ fn run_evals(args: EvalRunArgs, i18n: &I18n) -> anyhow::Result<()> {
 
     let engine_def = build_engine(&args.engine, args.engine_command.as_deref(), i18n)?;
 
-    // Verify evals/evals.json is loadable before starting the engine run,
-    // so the user gets a localized error rather than an English anyhow string.
+    // Load evals/evals.json once here for localized error reporting; the same
+    // schema is passed directly to the runner to avoid redundant I/O.
     let evals_path = args.path.join("evals").join("evals.json");
-    EvalsSchema::load(&evals_path)
+    let schema = EvalsSchema::load(&evals_path)
         .map_err(|_| anyhow::anyhow!("{}", i18n.t("eval.evals_load_failed")))?;
 
     let msg = i18n
@@ -94,7 +94,7 @@ fn run_evals(args: EvalRunArgs, i18n: &I18n) -> anyhow::Result<()> {
 
     let runner = EvalRunner::new(engine_def);
 
-    match runner.run_all(&args.path) {
+    match runner.run_all(&schema) {
         Ok(results) => {
             for r in &results {
                 let msg = i18n.t("eval.run_item").replace("{id}", &r.eval_id);

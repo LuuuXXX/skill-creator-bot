@@ -36,7 +36,7 @@
   "publish.load_failed": "Warning: could not load scb.project.json to save publish metadata",
 
   "package.not_implemented": "Packaging is not yet fully implemented.",
-  "package.python_hint": "This command will call scripts/package_skill.py for packaging.\nPlease ensure Python 3 is installed, then run manually:\n  python scripts/package_skill.py {path}\nIf scripts/package_skill.py is not present, see the project README for instructions on obtaining the script.",
+  "package.python_hint": "This command will call scripts/package_skill.py for packaging.\nPlease ensure Python 3 is installed, then run manually:\n  {python_cmd} scripts/package_skill.py {path}\nIf scripts/package_skill.py is not present, see the project README for instructions on obtaining the script.",
   "package.python_not_found": "Python 3 not found. Please install Python 3 to use the package command.",
   "package.python_found": "Python 3 detected: {python}",
 

@@ -1,4 +1,3 @@
-use std::path::Path;
 use std::process::Command;
 
 use scb_core::schema::{EvalItem, EvalsSchema};
@@ -49,11 +48,11 @@ impl EvalRunner {
         Self { engine }
     }
 
-    /// Load and run all evals from `evals/evals.json` in the given skill directory.
-    pub fn run_all(&self, skill_dir: &Path) -> anyhow::Result<Vec<EvalRunResult>> {
-        let evals_path = skill_dir.join("evals").join("evals.json");
-        let schema = EvalsSchema::load(&evals_path)?;
-
+    /// Run all evals from a pre-loaded schema.
+    ///
+    /// Callers are expected to load `EvalsSchema` themselves (with localized
+    /// error handling) and pass it here, so the file is only read once.
+    pub fn run_all(&self, schema: &EvalsSchema) -> anyhow::Result<Vec<EvalRunResult>> {
         let mut results = Vec::new();
         for item in &schema.evals {
             let result = self.run_item(item)?;
