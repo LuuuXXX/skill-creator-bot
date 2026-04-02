@@ -1,0 +1,14 @@
+[package]
+name = "scb-registry"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+scb-core = { path = "../scb-core" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+which = { workspace = true }

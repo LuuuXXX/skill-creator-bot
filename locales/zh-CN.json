@@ -1,0 +1,41 @@
+{
+  "init.creating": "正在创建技能目录...",
+  "init.success": "技能已成功创建：",
+  "init.already_exists": "目录已存在：",
+  "init.hint_next": "下一步：\n  scb validate --path {path}\n  scb publish  --path {path} --registry clawhub ...",
+
+  "validate.checking": "正在检查技能结构...",
+  "validate.ok": "验证通过！",
+  "validate.errors": "发现错误：",
+  "validate.warnings": "警告：",
+  "validate.failed": "验证失败，请修复上述错误后重试。",
+
+  "publish.preflight": "正在检查发布环境...",
+  "publish.publishing": "正在发布到 {registry}...",
+  "publish.success": "发布成功！",
+  "publish.url": "技能地址：{url}",
+  "publish.slug": "Slug：{slug}",
+  "publish.clawhub_not_found": "未找到 `clawhub` 命令。\n请安装：npm i -g clawhub\n然后登录：clawhub login",
+  "publish.not_logged_in": "您尚未登录 ClawHub。\n请运行 `clawhub login` 完成认证后重试。",
+  "publish.failed": "发布失败：",
+  "publish.saved": "发布元数据已保存到 scb.project.json。",
+
+  "package.not_implemented": "打包功能尚未完整实现。",
+  "package.python_hint": "TODO：此命令将调用 scripts/package_skill.py 进行打包。\n请确保已安装 Python 3，然后手动执行：\n  python -m scripts.package_skill {path}",
+  "package.python_not_found": "未找到 Python 3。请先安装 Python 3 以使用打包功能。",
+  "package.python_found": "检测到 Python 3：{python}",
+
+  "eval.not_implemented": "eval 运行功能为占位符，完整实现将在后续版本中提供。",
+  "eval.list_header": "evals/evals.json 中的评测项：",
+  "eval.run_start": "开始运行评测（使用引擎：{engine}）...",
+  "eval.run_item": "运行评测：{id}",
+  "eval.run_done": "所有评测已完成。",
+  "eval.run_failed": "评测 {id} 失败：{error}",
+  "eval.skip_hint": "提示：可使用 --skip 跳过评测运行。",
+
+  "common.error": "错误",
+  "common.warning": "警告",
+  "common.done": "完成",
+  "common.path": "路径",
+  "common.lang": "语言"
+}

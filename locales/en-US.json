@@ -1,0 +1,41 @@
+{
+  "init.creating": "Creating skill directory...",
+  "init.success": "Skill created successfully:",
+  "init.already_exists": "Directory already exists:",
+  "init.hint_next": "Next steps:\n  scb validate --path {path}\n  scb publish  --path {path} --registry clawhub ...",
+
+  "validate.checking": "Checking skill structure...",
+  "validate.ok": "Validation passed!",
+  "validate.errors": "Errors found:",
+  "validate.warnings": "Warnings:",
+  "validate.failed": "Validation failed. Please fix the errors above and try again.",
+
+  "publish.preflight": "Checking publish environment...",
+  "publish.publishing": "Publishing to {registry}...",
+  "publish.success": "Published successfully!",
+  "publish.url": "Skill URL: {url}",
+  "publish.slug": "Slug: {slug}",
+  "publish.clawhub_not_found": "`clawhub` command not found.\nInstall it with: npm i -g clawhub\nThen log in with: clawhub login",
+  "publish.not_logged_in": "You are not logged in to ClawHub.\nRun `clawhub login` to authenticate, then try again.",
+  "publish.failed": "Publish failed:",
+  "publish.saved": "Publish metadata saved to scb.project.json.",
+
+  "package.not_implemented": "Packaging is not yet fully implemented.",
+  "package.python_hint": "TODO: This command will call scripts/package_skill.py for packaging.\nPlease ensure Python 3 is installed, then run manually:\n  python -m scripts.package_skill {path}",
+  "package.python_not_found": "Python 3 not found. Please install Python 3 to use the package command.",
+  "package.python_found": "Python 3 detected: {python}",
+
+  "eval.not_implemented": "Eval running is a placeholder; full implementation will come in a future release.",
+  "eval.list_header": "Eval items in evals/evals.json:",
+  "eval.run_start": "Starting eval run (engine: {engine})...",
+  "eval.run_item": "Running eval: {id}",
+  "eval.run_done": "All evals completed.",
+  "eval.run_failed": "Eval {id} failed: {error}",
+  "eval.skip_hint": "Tip: use --skip to skip eval running.",
+
+  "common.error": "Error",
+  "common.warning": "Warning",
+  "common.done": "Done",
+  "common.path": "Path",
+  "common.lang": "Language"
+}
