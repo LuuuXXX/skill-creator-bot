@@ -1,10 +1,33 @@
 use std::path::Path;
 use std::process::Command;
 
-use anyhow::Context;
 use scb_core::schema::{EvalItem, EvalsSchema};
 
 use crate::config::EngineDefinition;
+
+/// Typed error returned when the engine process cannot be launched.
+///
+/// Callers (e.g. `scb-cli`) should match on this to produce a localized
+/// user-facing message rather than displaying the raw English context string.
+#[derive(Debug)]
+pub struct EngineCommandNotFound {
+    /// The engine command that could not be found/executed.
+    pub command: String,
+    /// The underlying OS error.
+    pub source: std::io::Error,
+}
+
+impl std::fmt::Display for EngineCommandNotFound {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "engine command `{}` could not be executed: {}", self.command, self.source)
+    }
+}
+
+impl std::error::Error for EngineCommandNotFound {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        Some(&self.source)
+    }
+}
 
 /// Result of running a single eval item.
 #[derive(Debug)]
@@ -52,12 +75,9 @@ impl EvalRunner {
         let output = Command::new(&self.engine.command)
             .args(&args)
             .output()
-            .with_context(|| {
-                format!(
-                    "Failed to run engine command `{}`.\n\
-                     Make sure the engine is installed and available in PATH.",
-                    self.engine.command
-                )
+            .map_err(|io_err| EngineCommandNotFound {
+                command: self.engine.command.clone(),
+                source: io_err,
             })?;
 
         let duration_ms = start.elapsed().as_millis();

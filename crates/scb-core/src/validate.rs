@@ -142,14 +142,22 @@ fn validate_frontmatter(content: &str, result: &mut ValidationResult) {
     // Skip past the opening `---\n` line (4 chars) and then look for a line that is exactly `---`.
     let after_open = &content[4..];
     // The closing delimiter must be `---` on its own line.
-    let end = after_open
-        .find("\n---\n")
-        .or_else(|| {
-            // Handle file ending without trailing newline after closing `---`.
-            after_open
-                .find("\n---")
-                .filter(|&pos| after_open[pos + 4..].is_empty())
-        });
+    // Special-case: `after_open` itself starts with `---` (optionally followed by `\n` or EOF)
+    // — this means the frontmatter is empty (e.g. `---\n---\n` or `---\n---`).
+    let end = if after_open == "---"
+        || after_open.starts_with("---\n")
+    {
+        Some(0)
+    } else {
+        after_open
+            .find("\n---\n")
+            .or_else(|| {
+                // Handle file ending without trailing newline after closing `---`.
+                after_open
+                    .find("\n---")
+                    .filter(|&pos| after_open[pos + 4..].is_empty())
+            })
+    };
 
     let end = match end {
         Some(pos) => pos,
@@ -240,6 +248,24 @@ mod tests {
         let result = validate_skill(tmp.path()).unwrap();
         assert!(!result.is_valid());
         assert!(result.errors.iter().any(|e| matches!(e, ValidationIssue::FrontmatterMissing)));
+    }
+
+    #[test]
+    fn test_empty_frontmatter_reports_missing_fields() {
+        // `---\n---\n` has valid delimiters but an empty body — should report
+        // missing required fields rather than FrontmatterNotClosed.
+        let tmp = tempfile::tempdir().unwrap();
+        fs::write(tmp.path().join("SKILL.md"), "---\n---\n# body\n").unwrap();
+        let result = validate_skill(tmp.path()).unwrap();
+        assert!(!result.is_valid(), "Empty frontmatter should fail validation");
+        assert!(
+            result.errors.iter().any(|e| matches!(e, ValidationIssue::FrontmatterMissingName)),
+            "Expected FrontmatterMissingName, got: {:?}", result.errors
+        );
+        assert!(
+            !result.errors.iter().any(|e| matches!(e, ValidationIssue::FrontmatterNotClosed)),
+            "Should not report FrontmatterNotClosed for empty but closed frontmatter"
+        );
     }
 
     #[test]

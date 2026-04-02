@@ -48,6 +48,7 @@
   "eval.run_failed": "评测 {id} 失败：{error}",
   "eval.skip_hint": "提示：可使用 --skip 跳过评测运行。",
   "eval.engine_missing_command": "使用 --engine custom 时，必须同时提供 --engine-command <command>",
+  "eval.engine_not_found": "未找到引擎命令 '{command}'，请确保已安装并在 PATH 中。",
 
   "common.error": "错误",
   "common.warning": "警告",

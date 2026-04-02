@@ -56,11 +56,12 @@ pub fn run(args: PublishArgs, i18n: &I18n) -> anyhow::Result<()> {
     if let Err(e) = provider.preflight() {
         // Build a single localized error message and propagate it — avoids
         // printing a user-facing line here *and* a second non-localized line
-        // from main's error handler.
+        // from main's error handler. Raw OS/provider detail is indented so
+        // the primary localized line is always the first thing the user sees.
         let localized = match &e {
             PreflightError::CliNotFound(_) => i18n.t("publish.clawhub_not_found").to_string(),
             PreflightError::NotAuthenticated(_) => i18n.t("publish.not_logged_in").to_string(),
-            PreflightError::Other(msg) => format!("{} {}", i18n.t("publish.failed"), msg),
+            PreflightError::Other(msg) => format!("{}\n  {}", i18n.t("publish.failed"), msg),
         };
         anyhow::bail!(localized);
     }
@@ -113,7 +114,10 @@ pub fn run(args: PublishArgs, i18n: &I18n) -> anyhow::Result<()> {
             }
         }
         Err(e) => {
-            anyhow::bail!("{} {}", i18n.t("publish.failed"), e);
+            // Keep the localized prefix as the primary error line; append the
+            // raw provider/OS detail as an indented line so users see a
+            // translated message first and the technical detail below.
+            anyhow::bail!("{}\n  {}", i18n.t("publish.failed"), e);
         }
     }
 

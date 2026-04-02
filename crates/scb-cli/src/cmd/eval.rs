@@ -4,6 +4,7 @@ use scb_core::i18n::I18n;
 use scb_core::schema::EvalsSchema;
 use scb_engine::config::EngineDefinition;
 use scb_engine::runner::EvalRunner;
+use scb_engine::EngineCommandNotFound;
 use std::path::PathBuf;
 
 #[derive(Args)]
@@ -108,8 +109,14 @@ fn run_evals(args: EvalRunArgs, i18n: &I18n) -> anyhow::Result<()> {
             println!("{}", i18n.t("eval.run_done").green().bold());
         }
         Err(e) => {
-            // Propagate the error to main's handler for a single, localized
-            // error line — don't print here too.
+            // If the engine binary was not found, produce a localized error
+            // message; otherwise propagate the raw error to main's handler.
+            if let Some(not_found) = e.downcast_ref::<EngineCommandNotFound>() {
+                let msg = i18n
+                    .t("eval.engine_not_found")
+                    .replace("{command}", &not_found.command);
+                anyhow::bail!(msg);
+            }
             return Err(e);
         }
     }

@@ -13,16 +13,7 @@ pub fn scaffold_skill(
     // Use create_dir (not create_dir_all) so we get a clear AlreadyExists error if the
     // directory already exists, preserving the "non-destructive" contract.
     // Propagate the raw std::io::Error so callers can downcast and localize it.
-    std::fs::create_dir(&skill_dir).map_err(|e| {
-        if e.kind() == std::io::ErrorKind::AlreadyExists {
-            // Return the raw IO error so the CLI can detect AlreadyExists and
-            // emit a localized message instead of an English hard-coded string.
-            e
-        } else {
-            // Wrap other errors with context but keep the IO error as the source.
-            e
-        }
-    })?;
+    std::fs::create_dir(&skill_dir)?;
     std::fs::create_dir_all(skill_dir.join("evals"))?;
     std::fs::create_dir_all(skill_dir.join("scripts"))?;
     std::fs::create_dir_all(skill_dir.join("references"))?;
