@@ -125,13 +125,22 @@ fn validate_frontmatter(content: &str, result: &mut ValidationResult) {
     // Normalize CRLF so the parser works on both Windows and Unix line endings.
     let content = content.replace("\r\n", "\n");
 
-    if !content.starts_with("---") {
+    // Require the opening delimiter to be exactly `---` on its own line.
+    // Checking only `starts_with("---")` would also accept `---name: foo`
+    // (an inline YAML document tag), which would then report FrontmatterNotClosed
+    // rather than the more accurate FrontmatterMissing.
+    if content == "---" {
+        // File contains only the opening delimiter with no content/closing.
+        result.error(ValidationIssue::FrontmatterNotClosed);
+        return;
+    }
+    if !content.starts_with("---\n") {
         result.error(ValidationIssue::FrontmatterMissing);
         return;
     }
 
-    // Skip past the opening `---` (3 chars) and then look for a line that is exactly `---`.
-    let after_open = &content[3..];
+    // Skip past the opening `---\n` line (4 chars) and then look for a line that is exactly `---`.
+    let after_open = &content[4..];
     // The closing delimiter must be `---` on its own line.
     let end = after_open
         .find("\n---\n")
@@ -199,60 +208,63 @@ mod tests {
 
     #[test]
     fn test_valid_skill_passes() {
-        let dir = std::env::temp_dir().join("scb_test_valid");
-        let _ = fs::remove_dir_all(&dir);
-        fs::create_dir_all(&dir).unwrap();
-        create_valid_skill(&dir);
-        let result = validate_skill(&dir).unwrap();
+        let tmp = tempfile::tempdir().unwrap();
+        create_valid_skill(tmp.path());
+        let result = validate_skill(tmp.path()).unwrap();
         assert!(result.is_valid(), "Expected valid, got errors: {:?}", result.errors);
     }
 
     #[test]
     fn test_missing_skill_md_fails() {
-        let dir = std::env::temp_dir().join("scb_test_missing_md");
-        let _ = fs::remove_dir_all(&dir);
-        fs::create_dir_all(&dir).unwrap();
-        let result = validate_skill(&dir).unwrap();
+        let tmp = tempfile::tempdir().unwrap();
+        let result = validate_skill(tmp.path()).unwrap();
         assert!(!result.is_valid());
         assert!(result.errors.iter().any(|e| matches!(e, ValidationIssue::SkillMdNotFound)));
     }
 
     #[test]
     fn test_missing_frontmatter_fails() {
-        let dir = std::env::temp_dir().join("scb_test_no_fm");
-        let _ = fs::remove_dir_all(&dir);
-        fs::create_dir_all(&dir).unwrap();
-        fs::write(dir.join("SKILL.md"), "# No frontmatter here\n").unwrap();
-        let result = validate_skill(&dir).unwrap();
+        let tmp = tempfile::tempdir().unwrap();
+        fs::write(tmp.path().join("SKILL.md"), "# No frontmatter here\n").unwrap();
+        let result = validate_skill(tmp.path()).unwrap();
+        assert!(!result.is_valid());
+        assert!(result.errors.iter().any(|e| matches!(e, ValidationIssue::FrontmatterMissing)));
+    }
+
+    #[test]
+    fn test_inline_yaml_tag_fails_as_frontmatter_missing() {
+        // `---name: foo` starts with `---` but is not on its own line; should
+        // report FrontmatterMissing, not FrontmatterNotClosed.
+        let tmp = tempfile::tempdir().unwrap();
+        fs::write(tmp.path().join("SKILL.md"), "---name: foo\n").unwrap();
+        let result = validate_skill(tmp.path()).unwrap();
         assert!(!result.is_valid());
         assert!(result.errors.iter().any(|e| matches!(e, ValidationIssue::FrontmatterMissing)));
     }
 
     #[test]
     fn test_crlf_skill_passes() {
-        let dir = std::env::temp_dir().join("scb_test_crlf");
-        let _ = fs::remove_dir_all(&dir);
-        fs::create_dir_all(dir.join("evals")).unwrap();
+        let tmp = tempfile::tempdir().unwrap();
+        fs::create_dir_all(tmp.path().join("evals")).unwrap();
         // Simulate a CRLF file (Windows line endings).
         let crlf = "---\r\nname: test\r\ndescription: A crlf skill\r\nversion: 0.1.0\r\n---\r\n# test\r\n";
-        fs::write(dir.join("SKILL.md"), crlf).unwrap();
+        fs::write(tmp.path().join("SKILL.md"), crlf).unwrap();
         let evals = r#"{"version":"1","evals":[]}"#;
-        fs::write(dir.join("evals").join("evals.json"), evals).unwrap();
-        let result = validate_skill(&dir).unwrap();
+        fs::write(tmp.path().join("evals").join("evals.json"), evals).unwrap();
+        let result = validate_skill(tmp.path()).unwrap();
         assert!(result.is_valid(), "CRLF file should be valid, got errors: {:?}", result.errors);
     }
 
     #[test]
     fn test_no_false_positive_on_similar_keys() {
-        let dir = std::env::temp_dir().join("scb_test_similar_keys");
-        let _ = fs::remove_dir_all(&dir);
-        fs::create_dir_all(dir.join("evals")).unwrap();
+        let tmp = tempfile::tempdir().unwrap();
+        fs::create_dir_all(tmp.path().join("evals")).unwrap();
         // "username" contains "name" — should still fail because "name" key is absent.
         let content = "---\nusername: test\ndescription: some desc\nversion: 0.1.0\n---\n# test\n";
-        fs::write(dir.join("SKILL.md"), content).unwrap();
+        fs::write(tmp.path().join("SKILL.md"), content).unwrap();
         let evals = r#"{"version":"1","evals":[]}"#;
-        fs::write(dir.join("evals").join("evals.json"), evals).unwrap();
-        let result = validate_skill(&dir).unwrap();
+        fs::write(tmp.path().join("evals").join("evals.json"), evals).unwrap();
+        let result = validate_skill(tmp.path()).unwrap();
         assert!(!result.is_valid(), "Should report missing 'name' key");
         assert!(result.errors.iter().any(|e| matches!(e, ValidationIssue::FrontmatterMissingName)));
     }

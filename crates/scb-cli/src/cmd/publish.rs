@@ -40,25 +40,26 @@ pub struct PublishArgs {
 pub fn run(args: PublishArgs, i18n: &I18n) -> anyhow::Result<()> {
     let provider: Box<dyn RegistryProvider> = match args.registry.to_lowercase().as_str() {
         "clawhub" => Box::new(ClawHubProvider),
-        other => anyhow::bail!("Unknown registry '{}'. Supported: clawhub", other),
+        other => {
+            let msg = i18n
+                .t("publish.unknown_registry")
+                .replace("{registry}", other);
+            anyhow::bail!(msg);
+        }
     };
 
     // Pre-flight checks
     println!("{}", i18n.t("publish.preflight").cyan());
     if let Err(e) = provider.preflight() {
-        // Match on the structured error kind to select the appropriate localized message.
-        match &e {
-            PreflightError::CliNotFound(_) => {
-                println!("{}", i18n.t("publish.clawhub_not_found").yellow());
-            }
-            PreflightError::NotAuthenticated(_) => {
-                println!("{}", i18n.t("publish.not_logged_in").yellow());
-            }
-            PreflightError::Other(msg) => {
-                println!("{} {}", i18n.t("publish.failed").red().bold(), msg);
-            }
-        }
-        anyhow::bail!("pre-flight failed");
+        // Build a single localized error message and propagate it — avoids
+        // printing a user-facing line here *and* a second non-localized line
+        // from main's error handler.
+        let localized = match &e {
+            PreflightError::CliNotFound(_) => i18n.t("publish.clawhub_not_found").to_string(),
+            PreflightError::NotAuthenticated(_) => i18n.t("publish.not_logged_in").to_string(),
+            PreflightError::Other(msg) => format!("{} {}", i18n.t("publish.failed"), msg),
+        };
+        anyhow::bail!(localized);
     }
 
     let registry_label = provider.name().to_string();
@@ -99,8 +100,7 @@ pub fn run(args: PublishArgs, i18n: &I18n) -> anyhow::Result<()> {
             }
         }
         Err(e) => {
-            println!("{} {}", i18n.t("publish.failed").red().bold(), e);
-            anyhow::bail!("publish failed");
+            anyhow::bail!("{} {}", i18n.t("publish.failed"), e);
         }
     }
 

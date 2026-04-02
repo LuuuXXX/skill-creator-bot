@@ -10,13 +10,17 @@ pub fn scaffold_skill(
     lang: &Lang,
 ) -> anyhow::Result<std::path::PathBuf> {
     let skill_dir = base_dir.join(skill_name);
-    // Use create_dir (not create_dir_all) so we get a clear error if the
+    // Use create_dir (not create_dir_all) so we get a clear AlreadyExists error if the
     // directory already exists, preserving the "non-destructive" contract.
+    // Propagate the raw std::io::Error so callers can downcast and localize it.
     std::fs::create_dir(&skill_dir).map_err(|e| {
         if e.kind() == std::io::ErrorKind::AlreadyExists {
-            anyhow::anyhow!("Directory '{}' already exists", skill_dir.display())
+            // Return the raw IO error so the CLI can detect AlreadyExists and
+            // emit a localized message instead of an English hard-coded string.
+            e
         } else {
-            anyhow::anyhow!("Cannot create '{}': {}", skill_dir.display(), e)
+            // Wrap other errors with context but keep the IO error as the source.
+            e
         }
     })?;
     std::fs::create_dir_all(skill_dir.join("evals"))?;

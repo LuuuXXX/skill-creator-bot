@@ -40,8 +40,9 @@ pub fn run(args: ValidateArgs, i18n: &I18n) -> anyhow::Result<()> {
         for e in &result.errors {
             println!("  {} {}", "✖".red(), render_issue(e, i18n));
         }
-        println!("{}", i18n.t("validate.failed").red());
-        anyhow::bail!("validation failed");
+        // Bail with the localized failure message; main's error handler will
+        // display it once with the localized error prefix ("错误:" / "error:").
+        anyhow::bail!("{}", i18n.t("validate.failed"));
     }
 
     Ok(())

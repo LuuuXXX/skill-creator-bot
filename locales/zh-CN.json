@@ -27,6 +27,7 @@
   "publish.success": "发布成功！",
   "publish.url": "技能地址：{url}",
   "publish.slug": "Slug：{slug}",
+  "publish.unknown_registry": "未知注册表 '{registry}'。支持的注册表：clawhub",
   "publish.clawhub_not_found": "未找到 `clawhub` 命令。\n请安装：npm i -g clawhub\n然后登录：clawhub login",
   "publish.not_logged_in": "您尚未登录 ClawHub。\n请运行 `clawhub login` 完成认证后重试。",
   "publish.failed": "发布失败：",

@@ -27,6 +27,7 @@
   "publish.success": "Published successfully!",
   "publish.url": "Skill URL: {url}",
   "publish.slug": "Slug: {slug}",
+  "publish.unknown_registry": "Unknown registry '{registry}'. Supported: clawhub",
   "publish.clawhub_not_found": "`clawhub` command not found.\nInstall it with: npm i -g clawhub\nThen log in with: clawhub login",
   "publish.not_logged_in": "You are not logged in to ClawHub.\nRun `clawhub login` to authenticate, then try again.",
   "publish.failed": "Publish failed:",

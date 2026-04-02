@@ -17,13 +17,21 @@ pub struct InitArgs {
 pub fn run(args: InitArgs, i18n: &I18n) -> anyhow::Result<()> {
     let skill_dir = args.dir.join(&args.skill_name);
 
-    if skill_dir.exists() {
-        anyhow::bail!("{} {}", i18n.t("init.already_exists"), skill_dir.display());
-    }
-
     println!("{}", i18n.t("init.creating").cyan());
 
-    let created = scaffold_skill(&args.skill_name, &args.dir, i18n.lang())?;
+    let created = scaffold_skill(&args.skill_name, &args.dir, i18n.lang()).map_err(|e| {
+        // If the underlying IO error is AlreadyExists, surface a localized message.
+        if let Some(io_err) = e.downcast_ref::<std::io::Error>() {
+            if io_err.kind() == std::io::ErrorKind::AlreadyExists {
+                return anyhow::anyhow!(
+                    "{} {}",
+                    i18n.t("init.already_exists"),
+                    skill_dir.display()
+                );
+            }
+        }
+        e
+    })?;
 
     println!(
         "{} {}",
