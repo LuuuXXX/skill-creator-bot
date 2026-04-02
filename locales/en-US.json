@@ -36,7 +36,7 @@
   "publish.load_failed": "Warning: could not load scb.project.json to save publish metadata",
 
   "package.not_implemented": "Packaging is not yet fully implemented.",
-  "package.python_hint": "This command will call scripts/package_skill.py for packaging.\nPlease ensure Python 3 is installed, then run manually:\n  {python_cmd} scripts/package_skill.py {path}\nIf scripts/package_skill.py is not present, see the project README for instructions on obtaining the script.",
+  "package.python_hint": "This command will call scripts/package_skill.py for packaging.\nPlease ensure Python 3 is installed, then run manually:\n  {python_cmd} scripts/package_skill.py {path}\nIf scripts/package_skill.py is not present, obtain it from your project template or repository.",
   "package.python_not_found": "Python 3 not found. Please install Python 3 to use the package command.",
   "package.python_found": "Python 3 detected: {python}",
 
@@ -52,7 +52,7 @@
   "eval.engine_launch_failed": "Failed to launch engine command '{command}': {error}",
   "eval.evals_load_failed": "Could not load evals/evals.json. Make sure the file exists and is valid JSON.",
 
-  "common.error": "error",
+  "common.error": "Error",
   "common.warning": "Warning",
   "common.done": "Done",
   "common.path": "Path",

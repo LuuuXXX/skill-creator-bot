@@ -45,10 +45,10 @@ impl ProjectConfig {
     /// `skill_dir` path is retained, which may still be relative.
     pub fn load(skill_dir: &std::path::Path) -> anyhow::Result<Self> {
         let path = skill_dir.join("scb.project.json");
-        let data = std::fs::read_to_string(&path)
-            .map_err(|e| anyhow::anyhow!("Cannot read {}: {}", path.display(), e))?;
-        let mut config: Self = serde_json::from_str(&data)
-            .map_err(|e| anyhow::anyhow!("Invalid scb.project.json: {}", e))?;
+        // Return the raw I/O or JSON parse error so callers can add localized
+        // context rather than receiving a hard-coded English string.
+        let data = std::fs::read_to_string(&path)?;
+        let mut config: Self = serde_json::from_str(&data)?;
         // Best-effort canonicalization; fall back to the original path if it fails.
         config.skill_dir = skill_dir
             .canonicalize()
@@ -60,8 +60,8 @@ impl ProjectConfig {
     pub fn save(&self) -> anyhow::Result<()> {
         let path = self.skill_dir.join("scb.project.json");
         let data = serde_json::to_string_pretty(self)?;
-        std::fs::write(&path, data)
-            .map_err(|e| anyhow::anyhow!("Cannot write {}: {}", path.display(), e))?;
+        // Return the raw I/O error so callers can add localized context.
+        std::fs::write(&path, data)?;
         Ok(())
     }
 }

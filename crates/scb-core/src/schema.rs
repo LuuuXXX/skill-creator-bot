@@ -48,11 +48,12 @@ impl Default for EvalsSchema {
 
 impl EvalsSchema {
     /// Load from a file path.
+    ///
+    /// Returns the underlying I/O or JSON parse error directly so callers can
+    /// add localized context rather than receiving a hard-coded English string.
     pub fn load(path: &std::path::Path) -> anyhow::Result<Self> {
-        let data = std::fs::read_to_string(path)
-            .map_err(|e| anyhow::anyhow!("Cannot read {}: {}", path.display(), e))?;
-        let schema: Self = serde_json::from_str(&data)
-            .map_err(|e| anyhow::anyhow!("Invalid evals.json: {}", e))?;
+        let data = std::fs::read_to_string(path)?;
+        let schema: Self = serde_json::from_str(&data)?;
         Ok(schema)
     }
 }

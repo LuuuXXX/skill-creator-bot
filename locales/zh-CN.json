@@ -36,7 +36,7 @@
   "publish.load_failed": "警告：无法加载 scb.project.json 以保存发布元数据",
 
   "package.not_implemented": "打包功能尚未完整实现。",
-  "package.python_hint": "TODO：此命令将调用 scripts/package_skill.py 进行打包（脚本尚未内置，请根据项目文档提供的地址获取该脚本）。\n请确保已安装 Python 3，然后手动执行：\n  {python_cmd} scripts/package_skill.py {path}",
+  "package.python_hint": "TODO：此命令将调用 scripts/package_skill.py 进行打包（脚本尚未内置，请从您的项目模板或代码仓库获取该脚本）。\n请确保已安装 Python 3，然后手动执行：\n  {python_cmd} scripts/package_skill.py {path}",
   "package.python_not_found": "未找到 Python 3。请先安装 Python 3 以使用打包功能。",
   "package.python_found": "检测到 Python 3：{python}",
 

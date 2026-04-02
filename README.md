@@ -102,6 +102,10 @@ Publish metadata (slug, version, URL) is saved back into `scb.project.json`.
 ### Package a skill
 
 > ⚠️ Full packaging is a stub in this release. It will call `scripts/package_skill.py` in a future PR.
+>
+> To experiment with packaging before it is fully wired up, create a script at `./my-skill/scripts/package_skill.py`.
+> You can use the latest reference implementation from the repository as a starting point:
+> https://github.com/LuuuXXX/skill-creator-bot/blob/main/scripts/package_skill.py
 
 ```bash
 scb package --path ./my-skill
