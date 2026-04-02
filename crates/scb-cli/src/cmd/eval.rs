@@ -5,6 +5,7 @@ use scb_core::schema::EvalsSchema;
 use scb_engine::config::EngineDefinition;
 use scb_engine::runner::EvalRunner;
 use scb_engine::EngineCommandNotFound;
+use std::io::ErrorKind;
 use std::path::PathBuf;
 
 #[derive(Args)]
@@ -75,7 +76,6 @@ fn run_list(args: EvalListArgs, i18n: &I18n) -> anyhow::Result<()> {
 fn run_evals(args: EvalRunArgs, i18n: &I18n) -> anyhow::Result<()> {
     if args.skip {
         println!("{}", i18n.t("eval.not_implemented").yellow());
-        println!("{}", i18n.t("eval.skip_hint").dimmed());
         return Ok(());
     }
 
@@ -116,12 +116,19 @@ fn run_evals(args: EvalRunArgs, i18n: &I18n) -> anyhow::Result<()> {
             println!("{}", i18n.t("eval.run_done").green().bold());
         }
         Err(e) => {
-            // If the engine binary was not found, produce a localized error
-            // message; otherwise propagate the raw error to main's handler.
+            // Map EngineCommandNotFound to a localized message.
+            // Distinguish "binary not in PATH" (NotFound) from other launch
+            // failures (e.g. permission denied, invalid executable) so the
+            // user gets an accurate diagnosis.
             if let Some(not_found) = e.downcast_ref::<EngineCommandNotFound>() {
-                let msg = i18n
-                    .t("eval.engine_not_found")
-                    .replace("{command}", &not_found.command);
+                let msg = if not_found.source.kind() == ErrorKind::NotFound {
+                    i18n.t("eval.engine_not_found")
+                        .replace("{command}", &not_found.command)
+                } else {
+                    i18n.t("eval.engine_launch_failed")
+                        .replace("{command}", &not_found.command)
+                        .replace("{error}", &not_found.source.to_string())
+                };
                 anyhow::bail!(msg);
             }
             return Err(e);

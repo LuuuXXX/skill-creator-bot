@@ -37,18 +37,19 @@ impl ProjectConfig {
 
     /// Load from `scb.project.json` inside the given skill directory.
     ///
-    /// The `skill_dir` field is set to the canonicalized form of the
-    /// caller-provided path so that a subsequent `save()` always writes to an
-    /// absolute, stable location — regardless of what was originally persisted
-    /// (e.g. a relative path) and regardless of the working directory from
-    /// which `scb` was invoked.
+    /// The `skill_dir` field is set to a best-effort canonicalized form of the
+    /// caller-provided path so that, when possible, a subsequent `save()` writes
+    /// to an absolute, stable location — regardless of what was originally
+    /// persisted (e.g. a relative path) and regardless of the working directory
+    /// from which `scb` was invoked. If canonicalization fails, the original
+    /// `skill_dir` path is retained, which may still be relative.
     pub fn load(skill_dir: &std::path::Path) -> anyhow::Result<Self> {
         let path = skill_dir.join("scb.project.json");
         let data = std::fs::read_to_string(&path)
             .map_err(|e| anyhow::anyhow!("Cannot read {}: {}", path.display(), e))?;
         let mut config: Self = serde_json::from_str(&data)
             .map_err(|e| anyhow::anyhow!("Invalid scb.project.json: {}", e))?;
-        // Canonicalize the caller-provided path so save() always uses an absolute path.
+        // Best-effort canonicalization; fall back to the original path if it fails.
         config.skill_dir = skill_dir
             .canonicalize()
             .unwrap_or_else(|_| skill_dir.to_path_buf());

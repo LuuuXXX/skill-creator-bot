@@ -49,6 +49,7 @@
   "eval.skip_hint": "提示：可使用 --skip 跳过评测运行。",
   "eval.engine_missing_command": "使用 --engine custom 时，必须同时提供 --engine-command <command>",
   "eval.engine_not_found": "未找到引擎命令 '{command}'，请确保已安装并在 PATH 中。",
+  "eval.engine_launch_failed": "启动引擎命令 '{command}' 失败：{error}",
   "eval.evals_load_failed": "无法加载 evals/evals.json，请确保文件存在且为有效的 JSON 格式。",
 
   "common.error": "错误",
