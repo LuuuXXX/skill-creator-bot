@@ -2,6 +2,7 @@ mod cmd;
 
 use clap::{Parser, Subcommand};
 use cmd::{eval, init, package, publish, validate};
+use colored::Colorize;
 use scb_core::i18n::{I18n, Lang};
 
 #[derive(Parser)]
@@ -48,7 +49,7 @@ fn main() {
     };
 
     if let Err(e) = result {
-        eprintln!("{}: {}", colored::Colorize::red("error"), e);
+        eprintln!("{}: {}", "error".red(), e);
         std::process::exit(1);
     }
 }

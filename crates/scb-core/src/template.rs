@@ -10,7 +10,15 @@ pub fn scaffold_skill(
     lang: &Lang,
 ) -> anyhow::Result<std::path::PathBuf> {
     let skill_dir = base_dir.join(skill_name);
-    std::fs::create_dir_all(&skill_dir)?;
+    // Use create_dir (not create_dir_all) so we get a clear error if the
+    // directory already exists, preserving the "non-destructive" contract.
+    std::fs::create_dir(&skill_dir).map_err(|e| {
+        if e.kind() == std::io::ErrorKind::AlreadyExists {
+            anyhow::anyhow!("Directory '{}' already exists", skill_dir.display())
+        } else {
+            anyhow::anyhow!("Cannot create '{}': {}", skill_dir.display(), e)
+        }
+    })?;
     std::fs::create_dir_all(skill_dir.join("evals"))?;
     std::fs::create_dir_all(skill_dir.join("scripts"))?;
     std::fs::create_dir_all(skill_dir.join("references"))?;
@@ -30,7 +38,9 @@ pub fn scaffold_skill(
     let canonical_dir = skill_dir
         .canonicalize()
         .unwrap_or_else(|_| skill_dir.clone());
-    let project = ProjectConfig::new(skill_name, canonical_dir);
+    let mut project = ProjectConfig::new(skill_name, canonical_dir);
+    // Persist the language so future commands default to the same locale.
+    project.lang = lang.clone();
     project.save()?;
 
     Ok(skill_dir)

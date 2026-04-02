@@ -2,7 +2,7 @@ use clap::Args;
 use colored::Colorize;
 use scb_core::i18n::I18n;
 use scb_core::project::{ProjectConfig, PublishRecord};
-use scb_registry::provider::{PublishMetadata, RegistryProvider};
+use scb_registry::provider::{PreflightError, PublishMetadata, RegistryProvider};
 use scb_registry::ClawHubProvider;
 use std::path::PathBuf;
 
@@ -46,14 +46,17 @@ pub fn run(args: PublishArgs, i18n: &I18n) -> anyhow::Result<()> {
     // Pre-flight checks
     println!("{}", i18n.t("publish.preflight").cyan());
     if let Err(e) = provider.preflight() {
-        // Provide friendly error message
-        let msg = e.to_string();
-        if msg.contains("not installed") || msg.contains("not found") {
-            println!("{}", i18n.t("publish.clawhub_not_found").yellow());
-        } else if msg.contains("not logged in") || msg.contains("log in") {
-            println!("{}", i18n.t("publish.not_logged_in").yellow());
-        } else {
-            println!("{} {}", i18n.t("publish.failed").red().bold(), msg);
+        // Match on the structured error kind to select the appropriate localized message.
+        match &e {
+            PreflightError::CliNotFound(_) => {
+                println!("{}", i18n.t("publish.clawhub_not_found").yellow());
+            }
+            PreflightError::NotAuthenticated(_) => {
+                println!("{}", i18n.t("publish.not_logged_in").yellow());
+            }
+            PreflightError::Other(msg) => {
+                println!("{} {}", i18n.t("publish.failed").red().bold(), msg);
+            }
         }
         anyhow::bail!("pre-flight failed");
     }

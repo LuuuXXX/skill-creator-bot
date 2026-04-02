@@ -26,6 +26,32 @@ pub struct PublishResult {
     pub version: String,
 }
 
+/// Structured error kinds returned by `preflight()`.
+///
+/// Using a typed enum lets callers select the right localized message without
+/// fragile substring matching on English error text.
+#[derive(Debug)]
+pub enum PreflightError {
+    /// The required CLI tool is not installed or not in PATH.
+    CliNotFound(String),
+    /// The user is not authenticated with the registry.
+    NotAuthenticated(String),
+    /// Any other preflight failure.
+    Other(String),
+}
+
+impl std::fmt::Display for PreflightError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::CliNotFound(msg) | Self::NotAuthenticated(msg) | Self::Other(msg) => {
+                write!(f, "{}", msg)
+            }
+        }
+    }
+}
+
+impl std::error::Error for PreflightError {}
+
 /// Trait that every registry provider must implement.
 ///
 /// Add new registries by implementing this trait in a new module and
@@ -35,8 +61,9 @@ pub trait RegistryProvider {
     fn name(&self) -> &str;
 
     /// Check that the required CLI / credentials are available.
-    /// Returns an `Err` with a human-readable message if pre-flight fails.
-    fn preflight(&self) -> anyhow::Result<()>;
+    /// Returns a typed `PreflightError` on failure so callers can select
+    /// the appropriate localized message without brittle string matching.
+    fn preflight(&self) -> Result<(), PreflightError>;
 
     /// Publish the skill at `skill_path` with the given metadata.
     fn publish(&self, skill_path: &Path, metadata: &PublishMetadata) -> anyhow::Result<PublishResult>;

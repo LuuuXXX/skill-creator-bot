@@ -1,10 +1,10 @@
 use std::path::Path;
 use std::process::Command;
 
-use anyhow::{bail, Context};
+use anyhow::Context;
 use which::which;
 
-use crate::provider::{PublishMetadata, PublishResult, RegistryProvider};
+use crate::provider::{PreflightError, PublishMetadata, PublishResult, RegistryProvider};
 
 /// Registry provider that delegates to the `clawhub` CLI tool.
 ///
@@ -17,13 +17,14 @@ impl RegistryProvider for ClawHubProvider {
         "ClawHub"
     }
 
-    fn preflight(&self) -> anyhow::Result<()> {
+    fn preflight(&self) -> Result<(), PreflightError> {
         // 1. Ensure `clawhub` binary is available.
-        which("clawhub").with_context(|| {
-            concat!(
-                "The `clawhub` CLI is not installed or not found in PATH.\n",
-                "  Install it with:  npm i -g clawhub\n",
-                "  Then log in with: clawhub login"
+        which("clawhub").map_err(|_| {
+            PreflightError::CliNotFound(
+                "The `clawhub` CLI is not installed or not found in PATH.\n  \
+                 Install it with:  npm i -g clawhub\n  \
+                 Then log in with: clawhub login"
+                    .to_string(),
             )
         })?;
 
@@ -31,13 +32,14 @@ impl RegistryProvider for ClawHubProvider {
         let output = Command::new("clawhub")
             .arg("whoami")
             .output()
-            .context("Failed to run `clawhub whoami`")?;
+            .map_err(|e| PreflightError::Other(format!("Failed to run `clawhub whoami`: {}", e)))?;
 
         if !output.status.success() {
-            bail!(
+            return Err(PreflightError::NotAuthenticated(
                 "You are not logged in to ClawHub.\n\
                  Run `clawhub login` to authenticate, then try again."
-            );
+                    .to_string(),
+            ));
         }
 
         Ok(())
@@ -64,7 +66,7 @@ impl RegistryProvider for ClawHubProvider {
 
         if !output.status.success() {
             let stderr = String::from_utf8_lossy(&output.stderr);
-            bail!("clawhub publish failed:\n{}", stderr.trim());
+            anyhow::bail!("clawhub publish failed:\n{}", stderr.trim());
         }
 
         let stdout = String::from_utf8_lossy(&output.stdout);

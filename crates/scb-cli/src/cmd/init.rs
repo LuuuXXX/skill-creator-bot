@@ -18,15 +18,7 @@ pub fn run(args: InitArgs, i18n: &I18n) -> anyhow::Result<()> {
     let skill_dir = args.dir.join(&args.skill_name);
 
     if skill_dir.exists() {
-        println!(
-            "{} {}",
-            i18n.t("init.already_exists").yellow(),
-            skill_dir.display()
-        );
-        anyhow::bail!(
-            "Directory '{}' already exists. Remove it or choose a different name.",
-            skill_dir.display()
-        );
+        anyhow::bail!("{} {}", i18n.t("init.already_exists"), skill_dir.display());
     }
 
     println!("{}", i18n.t("init.creating").cyan());
