@@ -37,11 +37,88 @@ pub fn scaffold_skill(
     // we fail fast rather than silently falling back to a relative path.
     let canonical_dir = skill_dir.canonicalize()?;
     let mut project = ProjectConfig::new(skill_name, canonical_dir.clone());
-    // Persist the language so future commands default to the same locale.
+    // Persist the language in project config for future use.
     project.lang = lang.clone();
     project.save()?;
 
     Ok(canonical_dir)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::i18n::Lang;
+
+    #[test]
+    fn test_scaffold_creates_expected_files() {
+        let tmp = tempfile::tempdir().unwrap();
+        let created = scaffold_skill("my-skill", tmp.path(), &Lang::EnUs).unwrap();
+
+        assert!(created.is_absolute(), "returned path should be absolute");
+        assert!(created.join("SKILL.md").exists(), "SKILL.md should exist");
+        assert!(
+            created.join("evals").join("evals.json").exists(),
+            "evals/evals.json should exist"
+        );
+        assert!(
+            created.join("scb.project.json").exists(),
+            "scb.project.json should exist"
+        );
+        assert!(created.join("scripts").exists(), "scripts/ dir should exist");
+        assert!(created.join("assets").exists(), "assets/ dir should exist");
+        assert!(
+            created.join("references").exists(),
+            "references/ dir should exist"
+        );
+    }
+
+    #[test]
+    fn test_scaffold_skill_md_contains_name() {
+        let tmp = tempfile::tempdir().unwrap();
+        let created = scaffold_skill("hello-world", tmp.path(), &Lang::EnUs).unwrap();
+        let content = std::fs::read_to_string(created.join("SKILL.md")).unwrap();
+        assert!(content.contains("hello-world"));
+        assert!(content.contains("name: hello-world"));
+    }
+
+    #[test]
+    fn test_scaffold_evals_json_valid_schema() {
+        let tmp = tempfile::tempdir().unwrap();
+        let created = scaffold_skill("test-skill", tmp.path(), &Lang::EnUs).unwrap();
+        let schema = crate::schema::EvalsSchema::load(
+            &created.join("evals").join("evals.json"),
+        )
+        .unwrap();
+        assert_eq!(schema.version, "1");
+        assert!(!schema.evals.is_empty(), "default evals should have placeholder items");
+    }
+
+    #[test]
+    fn test_scaffold_project_json_has_correct_skill_name() {
+        let tmp = tempfile::tempdir().unwrap();
+        let created = scaffold_skill("my-skill", tmp.path(), &Lang::ZhCn).unwrap();
+        let config = crate::project::ProjectConfig::load(&created).unwrap();
+        assert_eq!(config.skill_name, "my-skill");
+        assert_eq!(config.lang, Lang::ZhCn);
+    }
+
+    #[test]
+    fn test_scaffold_fails_if_skill_dir_already_exists() {
+        let tmp = tempfile::tempdir().unwrap();
+        scaffold_skill("dupe-skill", tmp.path(), &Lang::EnUs).unwrap();
+        let err = scaffold_skill("dupe-skill", tmp.path(), &Lang::EnUs).unwrap_err();
+        let io_err = err.downcast_ref::<std::io::Error>().unwrap();
+        assert_eq!(io_err.kind(), std::io::ErrorKind::AlreadyExists);
+    }
+
+    #[test]
+    fn test_scaffold_zh_cn_skill_md_contains_name() {
+        let tmp = tempfile::tempdir().unwrap();
+        let created = scaffold_skill("技能名称", tmp.path(), &Lang::ZhCn).unwrap();
+        let content = std::fs::read_to_string(created.join("SKILL.md")).unwrap();
+        assert!(content.contains("技能名称"));
+        assert!(content.contains("name: 技能名称"));
+    }
 }
 
 fn generate_skill_md(skill_name: &str, lang: &Lang) -> String {

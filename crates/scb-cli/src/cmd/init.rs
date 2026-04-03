@@ -18,16 +18,20 @@ pub fn run(args: InitArgs, i18n: &I18n) -> anyhow::Result<()> {
     // Validate the skill name with i18n available so the rejection message is
     // fully localized. Clap's value_parser runs before --lang is resolved, so
     // moving this check here ensures zh-CN users never see an English error.
-    use std::path::Component;
-    let mut components = std::path::Path::new(&args.skill_name).components();
-    match (components.next(), components.next()) {
-        (Some(Component::Normal(_)), None) => {} // valid — a single plain segment
-        _ => {
-            let msg = i18n
-                .t("init.invalid_skill_name")
-                .replace("{name}", &args.skill_name);
-            anyhow::bail!(msg);
-        }
+    //
+    // Use explicit string checks instead of Path::components() so validation is
+    // consistent across platforms. In particular, '\' is not a path separator
+    // on Unix, but the CLI contract forbids both separators and traversal names.
+    if args.skill_name.is_empty()
+        || args.skill_name.contains('/')
+        || args.skill_name.contains('\\')
+        || args.skill_name == "."
+        || args.skill_name == ".."
+    {
+        let msg = i18n
+            .t("init.invalid_skill_name")
+            .replace("{name}", &args.skill_name);
+        anyhow::bail!(msg);
     }
 
     let skill_dir = args.dir.join(&args.skill_name);
