@@ -6,13 +6,6 @@ use scb_registry::provider::{PreflightError, PublishMetadata, RegistryProvider};
 use scb_registry::ClawHubProvider;
 use std::path::PathBuf;
 
-/// Parse and validate a string as a SemVer version.
-fn parse_semver(s: &str) -> Result<String, String> {
-    semver::Version::parse(s)
-        .map(|_| s.to_string())
-        .map_err(|e| format!("invalid SemVer version '{}': {}", s, e))
-}
-
 #[derive(Args)]
 pub struct PublishArgs {
     /// Path to the skill directory (default: current directory)
@@ -32,7 +25,7 @@ pub struct PublishArgs {
     pub name: String,
 
     /// Semantic version (e.g. 1.0.0)
-    #[arg(long, value_parser = parse_semver)]
+    #[arg(long)]
     pub version: String,
 
     /// Changelog / release notes
@@ -45,6 +38,17 @@ pub struct PublishArgs {
 }
 
 pub fn run(args: PublishArgs, i18n: &I18n) -> anyhow::Result<()> {
+    // Validate --version as SemVer now that i18n is available, so the rejection
+    // message is fully localized rather than the English-only parse-time error
+    // that a clap value_parser would emit.
+    if let Err(e) = semver::Version::parse(&args.version) {
+        let msg = i18n
+            .t("publish.invalid_version")
+            .replace("{version}", &args.version)
+            .replace("{detail}", &e.to_string());
+        anyhow::bail!(msg);
+    }
+
     // Normalize registry to lowercase once; this is the canonical id persisted
     // in scb.project.json and used for display/dispatch throughout.
     let registry_id = args.registry.to_lowercase();
@@ -61,16 +65,15 @@ pub fn run(args: PublishArgs, i18n: &I18n) -> anyhow::Result<()> {
     // Pre-flight checks
     println!("{}", i18n.t("publish.preflight").cyan());
     if let Err(e) = provider.preflight() {
-        // Build a single localized error message and propagate it — avoids
-        // printing a user-facing line here *and* a second non-localized line
-        // from main's error handler. Raw OS/provider detail is indented so
-        // the primary localized line is always the first thing the user sees.
+        // Select a localized top-level message per error kind. Wrap the original
+        // PreflightError as the source so main's chain printer can surface the
+        // technical detail (e.g. the inner OS error for PreflightError::Other).
         let localized = match &e {
-            PreflightError::CliNotFound(_) => i18n.t("publish.clawhub_not_found").to_string(),
-            PreflightError::NotAuthenticated => i18n.t("publish.not_logged_in").to_string(),
-            PreflightError::Other(msg) => format!("{}\n  {}", i18n.t("publish.failed"), msg),
+            PreflightError::CliNotFound(_) => i18n.t("publish.clawhub_not_found").into_owned(),
+            PreflightError::NotAuthenticated => i18n.t("publish.not_logged_in").into_owned(),
+            PreflightError::Other(_) => i18n.t("publish.failed").into_owned(),
         };
-        anyhow::bail!(localized);
+        return Err(anyhow::Error::new(e).context(localized));
     }
 
     let registry_label = provider.name().to_string();
@@ -121,10 +124,10 @@ pub fn run(args: PublishArgs, i18n: &I18n) -> anyhow::Result<()> {
             }
         }
         Err(e) => {
-            // Keep the localized prefix as the primary error line; append the
-            // raw provider/OS detail as an indented line so users see a
-            // translated message first and the technical detail below.
-            anyhow::bail!("{}\n  {}", i18n.t("publish.failed"), e);
+            // Wrap the raw provider error with the localized summary as context
+            // so main can print the localized message as the primary line and
+            // the technical cause (provider/OS detail) as indented follow-on.
+            return Err(e.context(i18n.t("publish.failed").to_string()));
         }
     }
 

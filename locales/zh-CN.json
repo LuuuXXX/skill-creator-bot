@@ -1,4 +1,5 @@
 {
+  "init.invalid_skill_name": "技能名称 '{name}' 无效：必须是一个简单的目录名（不能包含 '/'、'\\\\' 或 '..'）",
   "init.creating": "正在创建技能目录...",
   "init.success": "技能已成功创建：",
   "init.already_exists": "目录已存在：",
@@ -22,6 +23,7 @@
   "validate.issue.evals_json_empty": "evals/evals.json 中没有评测项",
   "validate.issue.project_json_not_found": "未找到 scb.project.json（请运行 `scb init` 创建）",
 
+  "publish.invalid_version": "版本号 '{version}' 无效：{detail}",
   "publish.preflight": "正在检查发布环境...",
   "publish.publishing": "正在发布到 {registry}...",
   "publish.success": "发布成功！",

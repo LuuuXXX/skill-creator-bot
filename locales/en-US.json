@@ -1,4 +1,5 @@
 {
+  "init.invalid_skill_name": "Invalid skill name '{name}': must be a single plain directory name (no '/', '\\\\', or '..')",
   "init.creating": "Creating skill directory...",
   "init.success": "Skill created successfully:",
   "init.already_exists": "Directory already exists:",
@@ -22,6 +23,7 @@
   "validate.issue.evals_json_empty": "evals/evals.json has no eval items",
   "validate.issue.project_json_not_found": "scb.project.json not found (run `scb init` to create it)",
 
+  "publish.invalid_version": "Invalid version '{version}': {detail}",
   "publish.preflight": "Checking publish environment...",
   "publish.publishing": "Publishing to {registry}...",
   "publish.success": "Published successfully!",

@@ -39,8 +39,8 @@ pub struct EvalRunArgs {
     #[arg(long, default_value = "claude-cli", value_parser = ["claude-cli", "custom"])]
     pub engine: String,
 
-    /// Custom command for the engine (used when --engine custom)
-    #[arg(long)]
+    /// Custom command for the engine (required when --engine custom)
+    #[arg(long, required_if_eq("engine", "custom"))]
     pub engine_command: Option<String>,
 
     /// Skip running evals (not yet fully implemented; prints a placeholder message)
