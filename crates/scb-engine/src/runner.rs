@@ -6,23 +6,25 @@ use crate::config::EngineDefinition;
 
 /// Typed error returned when the engine process cannot be launched.
 ///
-/// Callers (e.g. `scb-cli`) should match on this to produce a localized
-/// user-facing message rather than displaying the raw English context string.
+/// This covers any `std::io::Error` from `Command::output()` — not just
+/// `ErrorKind::NotFound` (binary missing from PATH) but also permission
+/// denied, invalid executable format, etc.  Callers (e.g. `scb-cli`) inspect
+/// `source.kind()` to select the appropriate localized message.
 #[derive(Debug)]
-pub struct EngineCommandNotFound {
-    /// The engine command that could not be found/executed.
+pub struct EngineCommandLaunchError {
+    /// The engine command that could not be launched.
     pub command: String,
     /// The underlying OS error.
     pub source: std::io::Error,
 }
 
-impl std::fmt::Display for EngineCommandNotFound {
+impl std::fmt::Display for EngineCommandLaunchError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "engine command `{}` could not be executed: {}", self.command, self.source)
+        write!(f, "engine command `{}` could not be launched: {}", self.command, self.source)
     }
 }
 
-impl std::error::Error for EngineCommandNotFound {
+impl std::error::Error for EngineCommandLaunchError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         Some(&self.source)
     }
@@ -74,7 +76,7 @@ impl EvalRunner {
         let output = Command::new(&self.engine.command)
             .args(&args)
             .output()
-            .map_err(|io_err| EngineCommandNotFound {
+            .map_err(|io_err| EngineCommandLaunchError {
                 command: self.engine.command.clone(),
                 source: io_err,
             })?;

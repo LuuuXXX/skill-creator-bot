@@ -5,7 +5,7 @@ use scb_core::i18n::I18n;
 use scb_core::schema::EvalsSchema;
 use scb_engine::config::EngineDefinition;
 use scb_engine::runner::EvalRunner;
-use scb_engine::EngineCommandNotFound;
+use scb_engine::EngineCommandLaunchError;
 use std::io::ErrorKind;
 use std::path::PathBuf;
 
@@ -131,7 +131,7 @@ fn run_evals(args: EvalRunArgs, i18n: &I18n) -> anyhow::Result<()> {
             // Distinguish "binary not in PATH" (NotFound) from other launch
             // failures (e.g. permission denied, invalid executable) so the
             // user gets an accurate diagnosis.
-            if let Some(not_found) = e.downcast_ref::<EngineCommandNotFound>() {
+            if let Some(not_found) = e.downcast_ref::<EngineCommandLaunchError>() {
                 let msg = if not_found.source.kind() == ErrorKind::NotFound {
                     i18n.t("eval.engine_not_found")
                         .replace("{command}", &not_found.command)
@@ -152,13 +152,12 @@ fn run_evals(args: EvalRunArgs, i18n: &I18n) -> anyhow::Result<()> {
 fn build_engine(engine_id: &str, custom_cmd: Option<&str>, i18n: &I18n) -> anyhow::Result<EngineDefinition> {
     match engine_id {
         "claude-cli" => Ok(EngineDefinition::claude_cli()),
-        // clap's value_parser restricts --engine to "claude-cli" | "custom", so
-        // the "custom" arm is the only other reachable case here.
-        _ => {
+        "custom" => {
             let cmd = custom_cmd.ok_or_else(|| {
                 anyhow::anyhow!("{}", i18n.t("eval.engine_missing_command"))
             })?;
             Ok(EngineDefinition::custom(cmd, &["{prompt}"]))
         }
+        _ => anyhow::bail!("unknown engine id: {}", engine_id),
     }
 }
