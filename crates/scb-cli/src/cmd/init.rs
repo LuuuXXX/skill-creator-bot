@@ -34,19 +34,24 @@ pub fn run(args: InitArgs, i18n: &I18n) -> anyhow::Result<()> {
 
     println!("{}", i18n.t("init.creating").cyan());
 
-    let created = scaffold_skill(&args.skill_name, &args.dir, i18n.lang()).map_err(|e| {
-        // If the underlying IO error is AlreadyExists, surface a localized message.
-        if let Some(io_err) = e.downcast_ref::<std::io::Error>() {
-            if io_err.kind() == std::io::ErrorKind::AlreadyExists {
-                return anyhow::anyhow!(
-                    "{} {}",
-                    i18n.t("init.already_exists"),
-                    skill_dir.display()
-                );
+    let created = scaffold_skill(&args.skill_name, &args.dir, i18n.lang())
+        .map_err(|e| {
+            // If the underlying IO error is AlreadyExists, surface a localized
+            // message without a source chain (the path is already in the message).
+            if let Some(io_err) = e.downcast_ref::<std::io::Error>() {
+                if io_err.kind() == std::io::ErrorKind::AlreadyExists {
+                    return anyhow::anyhow!(
+                        "{} {}",
+                        i18n.t("init.already_exists"),
+                        skill_dir.display()
+                    );
+                }
             }
-        }
-        e
-    })?;
+            // For all other failures (permission denied, canonicalize failure,
+            // etc.) add a localized context line while preserving the original
+            // OS/IO error as a chain source for diagnostic detail.
+            e.context(i18n.t("init.create_failed").into_owned())
+        })?;
 
     println!(
         "{} {}",

@@ -50,7 +50,10 @@ impl std::fmt::Display for PreflightError {
         match self {
             Self::CliNotFound(cmd) => write!(f, "CliNotFound({})", cmd),
             Self::NotAuthenticated => write!(f, "NotAuthenticated"),
-            Self::Other(e) => write!(f, "{}", e),
+            // Display is intentionally structural so the inner OS/tool error
+            // appears only once (via source()), preventing duplicate cause lines
+            // when anyhow walks the error chain.
+            Self::Other(_) => write!(f, "Other"),
         }
     }
 }

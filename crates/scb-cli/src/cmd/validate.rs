@@ -1,5 +1,6 @@
 use clap::Args;
 use colored::Colorize;
+use anyhow::Context as _;
 use scb_core::i18n::I18n;
 use scb_core::validate::{validate_skill, ValidationIssue};
 use std::path::PathBuf;
@@ -24,7 +25,8 @@ fn render_issue(issue: &ValidationIssue, i18n: &I18n) -> String {
 pub fn run(args: ValidateArgs, i18n: &I18n) -> anyhow::Result<()> {
     println!("{}", i18n.t("validate.checking").cyan());
 
-    let result = validate_skill(&args.path)?;
+    let result = validate_skill(&args.path)
+        .with_context(|| i18n.t("validate.check_failed").into_owned())?;
 
     if !result.warnings.is_empty() {
         println!("{}", i18n.t("validate.warnings").yellow().bold());

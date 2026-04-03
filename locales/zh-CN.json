@@ -3,9 +3,11 @@
   "init.creating": "正在创建技能目录...",
   "init.success": "技能已成功创建：",
   "init.already_exists": "目录已存在：",
+  "init.create_failed": "创建技能目录失败。",
   "init.hint_next": "下一步：\n  scb validate --path {path}\n  scb publish  --path {path} --registry clawhub ...",
 
   "validate.checking": "正在检查技能结构...",
+  "validate.check_failed": "无法读取技能目录，请确认路径存在且可读。",
   "validate.ok": "验证通过！",
   "validate.errors": "发现错误：",
   "validate.warnings": "警告：",

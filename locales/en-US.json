@@ -3,9 +3,11 @@
   "init.creating": "Creating skill directory...",
   "init.success": "Skill created successfully:",
   "init.already_exists": "Directory already exists:",
+  "init.create_failed": "Failed to create skill directory.",
   "init.hint_next": "Next steps:\n  scb validate --path {path}\n  scb publish  --path {path} --registry clawhub ...",
 
   "validate.checking": "Checking skill structure...",
+  "validate.check_failed": "Failed to read skill directory. Check that the path exists and is readable.",
   "validate.ok": "Validation passed!",
   "validate.errors": "Errors found:",
   "validate.warnings": "Warnings:",

@@ -65,15 +65,20 @@ pub fn run(args: PublishArgs, i18n: &I18n) -> anyhow::Result<()> {
     // Pre-flight checks
     println!("{}", i18n.t("publish.preflight").cyan());
     if let Err(e) = provider.preflight() {
-        // Select a localized top-level message per error kind. Wrap the original
-        // PreflightError as the source so main's chain printer can surface the
-        // technical detail (e.g. the inner OS error for PreflightError::Other).
-        let localized = match &e {
-            PreflightError::CliNotFound(_) => i18n.t("publish.clawhub_not_found").into_owned(),
-            PreflightError::NotAuthenticated => i18n.t("publish.not_logged_in").into_owned(),
-            PreflightError::Other(_) => i18n.t("publish.failed").into_owned(),
-        };
-        return Err(anyhow::Error::new(e).context(localized));
+        // For known variants the localized message is self-contained; attaching
+        // the PreflightError as a source would only add raw variant-name noise.
+        // For Other, preserve the underlying OS/tool error as a chain source so
+        // main's layered display can show it as an indented technical detail.
+        return Err(match e {
+            PreflightError::CliNotFound(_) => {
+                anyhow::anyhow!(i18n.t("publish.clawhub_not_found").into_owned())
+            }
+            PreflightError::NotAuthenticated => {
+                anyhow::anyhow!(i18n.t("publish.not_logged_in").into_owned())
+            }
+            PreflightError::Other(err) => anyhow::Error::new(PreflightError::Other(err))
+                .context(i18n.t("publish.failed").into_owned()),
+        });
     }
 
     let registry_label = provider.name().to_string();

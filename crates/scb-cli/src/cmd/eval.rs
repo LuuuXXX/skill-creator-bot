@@ -1,5 +1,6 @@
 use clap::{Args, Subcommand};
 use colored::Colorize;
+use anyhow::Context as _;
 use scb_core::i18n::I18n;
 use scb_core::schema::EvalsSchema;
 use scb_engine::config::EngineDefinition;
@@ -58,7 +59,7 @@ pub fn run(args: EvalArgs, i18n: &I18n) -> anyhow::Result<()> {
 fn run_list(args: EvalListArgs, i18n: &I18n) -> anyhow::Result<()> {
     let evals_path = args.path.join("evals").join("evals.json");
     let schema = EvalsSchema::load(&evals_path)
-        .map_err(|_| anyhow::anyhow!("{}", i18n.t("eval.evals_load_failed")))?;
+        .with_context(|| i18n.t("eval.evals_load_failed").into_owned())?;
 
     println!("{}", i18n.t("eval.list_header").cyan().bold());
     for item in &schema.evals {
@@ -85,7 +86,7 @@ fn run_evals(args: EvalRunArgs, i18n: &I18n) -> anyhow::Result<()> {
     // schema is passed directly to the runner to avoid redundant I/O.
     let evals_path = args.path.join("evals").join("evals.json");
     let schema = EvalsSchema::load(&evals_path)
-        .map_err(|_| anyhow::anyhow!("{}", i18n.t("eval.evals_load_failed")))?;
+        .with_context(|| i18n.t("eval.evals_load_failed").into_owned())?;
 
     let msg = i18n
         .t("eval.run_start")
