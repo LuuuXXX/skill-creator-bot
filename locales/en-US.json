@@ -24,6 +24,7 @@
   "validate.issue.evals_json_invalid": "evals/evals.json is invalid: {detail}",
   "validate.issue.evals_json_empty": "evals/evals.json has no eval items",
   "validate.issue.project_json_not_found": "scb.project.json not found (run `scb init` to create it)",
+  "validate.issue.skill_dir_not_directory": "Path exists but is not a directory",
 
   "publish.invalid_version": "Invalid version '{version}': {detail}",
   "publish.preflight": "Checking publish environment...",

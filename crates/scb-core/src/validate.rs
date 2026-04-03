@@ -29,6 +29,8 @@ pub enum ValidationIssue {
     EvalsJsonEmpty,
     /// `scb.project.json` is not present (recommended).
     ProjectJsonNotFound,
+    /// The path provided for the skill directory exists but is not a directory.
+    SkillDirNotDirectory,
 }
 
 impl ValidationIssue {
@@ -46,6 +48,7 @@ impl ValidationIssue {
             Self::EvalsJsonInvalid(_) => "validate.issue.evals_json_invalid",
             Self::EvalsJsonEmpty => "validate.issue.evals_json_empty",
             Self::ProjectJsonNotFound => "validate.issue.project_json_not_found",
+            Self::SkillDirNotDirectory => "validate.issue.skill_dir_not_directory",
         }
     }
 
@@ -91,11 +94,9 @@ pub fn validate_skill(skill_dir: &Path) -> anyhow::Result<ValidationResult> {
     // that doesn't exist at all.
     let meta = std::fs::metadata(skill_dir)?;
     if !meta.is_dir() {
-        return Err(std::io::Error::new(
-            std::io::ErrorKind::Other,
-            format!("'{}' is not a directory", skill_dir.display()),
-        )
-        .into());
+        let mut result = ValidationResult::default();
+        result.error(ValidationIssue::SkillDirNotDirectory);
+        return Ok(result);
     }
 
     let mut result = ValidationResult::default();
@@ -237,6 +238,19 @@ mod tests {
         assert!(
             err.downcast_ref::<std::io::Error>().is_some(),
             "Expected std::io::Error, got: {err}"
+        );
+    }
+
+    #[test]
+    fn test_not_a_directory_returns_validation_issue() {
+        let tmp = tempfile::tempdir().unwrap();
+        let file_path = tmp.path().join("not_a_dir.txt");
+        fs::write(&file_path, "hello").unwrap();
+        let result = validate_skill(&file_path).unwrap();
+        assert!(!result.is_valid());
+        assert!(
+            result.errors.iter().any(|e| matches!(e, ValidationIssue::SkillDirNotDirectory)),
+            "Expected SkillDirNotDirectory, got: {:?}", result.errors
         );
     }
 

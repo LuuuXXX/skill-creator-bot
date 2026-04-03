@@ -24,6 +24,7 @@
   "validate.issue.evals_json_invalid": "evals/evals.json 格式无效：{detail}",
   "validate.issue.evals_json_empty": "evals/evals.json 中没有评测项",
   "validate.issue.project_json_not_found": "未找到 scb.project.json（请运行 `scb init` 创建）",
+  "validate.issue.skill_dir_not_directory": "路径存在，但不是目录",
 
   "publish.invalid_version": "版本号 '{version}' 无效：{detail}",
   "publish.preflight": "正在检查发布环境...",
