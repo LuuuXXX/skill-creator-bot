@@ -1,0 +1,72 @@
+use clap::Args;
+use colored::Colorize;
+use scb_core::i18n::I18n;
+use scb_core::template::scaffold_skill;
+use std::path::PathBuf;
+
+#[derive(Args)]
+pub struct InitArgs {
+    /// Name of the skill to create (must be a single directory name, no '/', '\\', or '..')
+    pub skill_name: String,
+
+    /// Base directory in which to create the skill folder (default: current directory)
+    #[arg(short, long, default_value = ".")]
+    pub dir: PathBuf,
+}
+
+pub fn run(args: InitArgs, i18n: &I18n) -> anyhow::Result<()> {
+    // Validate the skill name with i18n available so the rejection message is
+    // fully localized. Clap's value_parser runs before --lang is resolved, so
+    // moving this check here ensures zh-CN users never see an English error.
+    //
+    // Use explicit string checks instead of Path::components() so validation is
+    // consistent across platforms. In particular, '\' is not a path separator
+    // on Unix, but the CLI contract forbids both separators and traversal names.
+    if args.skill_name.is_empty()
+        || args.skill_name.contains('/')
+        || args.skill_name.contains('\\')
+        || args.skill_name == "."
+        || args.skill_name == ".."
+    {
+        let msg = i18n
+            .t("init.invalid_skill_name")
+            .replace("{name}", &args.skill_name);
+        anyhow::bail!(msg);
+    }
+
+    let skill_dir = args.dir.join(&args.skill_name);
+
+    println!("{}", i18n.t("init.creating").cyan());
+
+    let created = scaffold_skill(&args.skill_name, &args.dir, i18n.lang())
+        .map_err(|e| {
+            // If the underlying IO error is AlreadyExists, surface a localized
+            // message without a source chain (the path is already in the message).
+            if let Some(io_err) = e.downcast_ref::<std::io::Error>() {
+                if io_err.kind() == std::io::ErrorKind::AlreadyExists {
+                    return anyhow::anyhow!(
+                        "{} {}",
+                        i18n.t("init.already_exists"),
+                        skill_dir.display()
+                    );
+                }
+            }
+            // For all other failures (permission denied, canonicalize failure,
+            // etc.) add a localized context line while preserving the original
+            // OS/IO error as a chain source for diagnostic detail.
+            e.context(i18n.t("init.create_failed").into_owned())
+        })?;
+
+    println!(
+        "{} {}",
+        i18n.t("init.success").green().bold(),
+        created.display()
+    );
+
+    let hint = i18n
+        .t("init.hint_next")
+        .replace("{path}", &created.to_string_lossy());
+    println!("\n{}", hint.dimmed());
+
+    Ok(())
+}

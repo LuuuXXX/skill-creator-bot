@@ -1,0 +1,21 @@
+[package]
+name = "scb-cli"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "scb"
+path = "src/main.rs"
+
+[dependencies]
+scb-core = { path = "../scb-core" }
+scb-registry = { path = "../scb-registry" }
+scb-engine = { path = "../scb-engine" }
+clap = { workspace = true }
+anyhow = { workspace = true }
+colored = { workspace = true }
+which = { workspace = true }
+semver = { workspace = true }
+dunce = { workspace = true }

@@ -1,0 +1,11 @@
+[package]
+name = "scb-engine"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+scb-core = { path = "../scb-core" }
+serde = { workspace = true }
+anyhow = { workspace = true }

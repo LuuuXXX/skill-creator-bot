@@ -1,0 +1,63 @@
+mod cmd;
+
+use clap::{Parser, Subcommand};
+use cmd::{eval, init, package, publish, validate};
+use colored::Colorize;
+use scb_core::i18n::{I18n, Lang};
+
+#[derive(Parser)]
+#[command(
+    name = "scb",
+    about = "Skill Creator Bot — create, validate, and publish Claude skills",
+    version
+)]
+struct Cli {
+    /// UI language: zh-CN (default) or en-US
+    #[arg(long, global = true, default_value = "zh-CN", value_parser = ["zh-CN", "en-US"])]
+    lang: String,
+
+    #[command(subcommand)]
+    command: Commands,
+}
+
+#[derive(Subcommand)]
+enum Commands {
+    /// Initialize a new skill project
+    Init(init::InitArgs),
+    /// Validate an existing skill directory
+    Validate(validate::ValidateArgs),
+    /// Publish a skill to a registry (default: ClawHub)
+    Publish(publish::PublishArgs),
+    /// Package a skill into a .skill bundle (stub)
+    Package(package::PackageArgs),
+    /// Manage and run skill evaluations
+    Eval(eval::EvalArgs),
+}
+
+fn main() {
+    let cli = Cli::parse();
+
+    let lang: Lang = cli.lang.parse().unwrap_or_default();
+    let i18n = I18n::load(&lang);
+
+    let result = match cli.command {
+        Commands::Init(args) => init::run(args, &i18n),
+        Commands::Validate(args) => validate::run(args, &i18n),
+        Commands::Publish(args) => publish::run(args, &i18n),
+        Commands::Package(args) => package::run(args, &i18n),
+        Commands::Eval(args) => eval::run(args, &i18n),
+    };
+
+    if let Err(e) = result {
+        // Print the top-level error (should be the localized message from handlers).
+        // Any underlying raw OS/parse errors are printed indented below so the
+        // localized summary is always prominent and clearly separated from details.
+        let mut iter = e.chain();
+        let msg = iter.next().map(|c| c.to_string()).unwrap_or_else(|| e.to_string());
+        eprintln!("{}: {}", i18n.t("common.error").red(), msg);
+        for cause in iter {
+            eprintln!("  {}", cause.to_string().dimmed());
+        }
+        std::process::exit(1);
+    }
+}
