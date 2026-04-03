@@ -45,6 +45,7 @@
   "package.python_found": "检测到 Python 3：{python}",
 
   "eval.not_implemented": "eval 运行功能为占位符，完整实现将在后续版本中提供。",
+  "eval.skipped": "已跳过评测运行。",
   "eval.list_header": "evals/evals.json 中的评测项：",
   "eval.run_start": "开始运行评测（使用引擎：{engine}）...",
   "eval.run_item": "运行评测：{id}",

@@ -42,6 +42,9 @@ pub enum PreflightError {
     /// The user is not authenticated with the registry.
     NotAuthenticated,
     /// Any other preflight failure (carries the raw source error).
+    ///
+    /// Uses `anyhow::Error` rather than `Box<dyn Error + Send + Sync>` for
+    /// ergonomic chain construction; the crate already depends on `anyhow`.
     Other(anyhow::Error),
 }
 

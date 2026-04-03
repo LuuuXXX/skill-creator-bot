@@ -45,6 +45,7 @@
   "package.python_found": "Python 3 detected: {python}",
 
   "eval.not_implemented": "Eval running is a placeholder; full implementation will come in a future release.",
+  "eval.skipped": "Eval run skipped.",
   "eval.list_header": "Eval items in evals/evals.json:",
   "eval.run_start": "Starting eval run (engine: {engine})...",
   "eval.run_item": "Running eval: {id}",

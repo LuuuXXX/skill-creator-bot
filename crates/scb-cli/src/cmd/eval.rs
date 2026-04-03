@@ -76,7 +76,7 @@ fn run_list(args: EvalListArgs, i18n: &I18n) -> anyhow::Result<()> {
 
 fn run_evals(args: EvalRunArgs, i18n: &I18n) -> anyhow::Result<()> {
     if args.skip {
-        println!("{}", i18n.t("eval.not_implemented").yellow());
+        println!("{}", i18n.t("eval.skipped").dimmed());
         return Ok(());
     }
 
@@ -114,6 +114,11 @@ fn run_evals(args: EvalRunArgs, i18n: &I18n) -> anyhow::Result<()> {
                         .replace("{id}", &r.eval_id)
                         .replace("{error}", &format!("exit code {}", code_str));
                     println!("  {} {}", "✖".red(), fail);
+                    if !r.output.trim().is_empty() {
+                        for line in r.output.lines() {
+                            println!("      {}", line);
+                        }
+                    }
                 }
             }
             if any_failed {
