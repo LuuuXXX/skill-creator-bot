@@ -105,14 +105,14 @@ fn run_evals(args: EvalRunArgs, i18n: &I18n) -> anyhow::Result<()> {
                     println!("  {} {}", "✔".green(), msg);
                 } else {
                     any_failed = true;
-                    let code_str = r
-                        .exit_code
-                        .map(|c| c.to_string())
-                        .unwrap_or_else(|| "signal".to_string());
+                    let code_str = match r.exit_code {
+                        Some(c) => i18n.t("eval.run_exit_code").replace("{code}", &c.to_string()),
+                        None => i18n.t("eval.run_exit_signal").into_owned(),
+                    };
                     let fail = i18n
                         .t("eval.run_failed")
                         .replace("{id}", &r.eval_id)
-                        .replace("{error}", &format!("exit code {}", code_str));
+                        .replace("{error}", &code_str);
                     println!("  {} {}", "✖".red(), fail);
                     if !r.output.trim().is_empty() {
                         for line in r.output.lines() {

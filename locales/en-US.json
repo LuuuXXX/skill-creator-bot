@@ -53,6 +53,8 @@
   "eval.run_done": "All evals completed.",
   "eval.run_some_failed": "One or more evals failed.",
   "eval.run_failed": "Eval {id} failed: {error}",
+  "eval.run_exit_code": "exit code {code}",
+  "eval.run_exit_signal": "terminated by signal",
   "eval.skip_hint": "Tip: use --skip to skip eval running.",
   "eval.engine_missing_command": "When using --engine custom, you must also provide --engine-command <command>",
   "eval.engine_not_found": "Engine command '{command}' not found. Make sure it is installed and available in PATH.",
