@@ -44,7 +44,7 @@ pub struct EvalRunArgs {
     #[arg(long, required_if_eq("engine", "custom"))]
     pub engine_command: Option<String>,
 
-    /// Skip running evals (not yet fully implemented; prints a placeholder message)
+    /// Skip running evals and print the skipped message
     #[arg(long)]
     pub skip: bool,
 }

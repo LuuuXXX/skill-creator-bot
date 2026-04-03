@@ -104,8 +104,8 @@ impl RegistryProvider for ClawHubProvider {
                 anyhow::bail!("{}", stdout);
             } else {
                 match output.status.code() {
-                    Some(code) => anyhow::bail!("`clawhub publish` failed with exit status {}", code),
-                    None => anyhow::bail!("`clawhub publish` was terminated by signal"),
+                    Some(code) => anyhow::bail!("exit {}", code),
+                    None => anyhow::bail!("signal"),
                 }
             }
         }
