@@ -17,7 +17,7 @@ fn validate_skill_name(s: &str) -> Result<String, String> {
     match (components.next(), components.next()) {
         (Some(Component::Normal(_)), None) => Ok(s.to_string()),
         _ => Err(format!(
-            "skill name must be a single directory name with no path separators or '..' (got {:?})",
+            "invalid skill name '{}': must be a single plain directory name (no '/', '\\', or '..')",
             s
         )),
     }

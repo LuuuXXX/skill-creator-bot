@@ -66,9 +66,15 @@ pub fn run(args: PackageArgs, i18n: &I18n) -> anyhow::Result<()> {
     // directory does not yet exist (e.g. used with a future `--path` value).
     let skill_dir = std::fs::canonicalize(&args.path).unwrap_or_else(|_| args.path.clone());
     let script_path = skill_dir.join("scripts").join("package_skill.py");
+    // Wrap the script path in double quotes so the suggested command is
+    // copy/paste-able even when the path contains spaces.  Embedded double
+    // quotes and backslashes are escaped first so they don't break the quoting.
+    let path_str = script_path.to_string_lossy();
+    let escaped_path = path_str.replace('\\', "\\\\").replace('"', "\\\"");
+    let quoted_path = format!("\"{}\"", escaped_path);
     let hint = i18n
         .t("package.python_hint")
-        .replace("{path}", &script_path.to_string_lossy())
+        .replace("{path}", &quoted_path)
         .replace("{python_cmd}", &python_cmd);
     println!("\n{}", hint.dimmed());
 

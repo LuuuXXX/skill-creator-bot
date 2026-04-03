@@ -49,7 +49,15 @@ fn main() {
     };
 
     if let Err(e) = result {
-        eprintln!("{}: {}", i18n.t("common.error").red(), e);
+        // Print the top-level error (should be the localized message from handlers).
+        // Any underlying raw OS/parse errors are printed indented below so the
+        // localized summary is always prominent and clearly separated from details.
+        let mut iter = e.chain();
+        let msg = iter.next().map(|c| c.to_string()).unwrap_or_else(|| e.to_string());
+        eprintln!("{}: {}", i18n.t("common.error").red(), msg);
+        for cause in iter {
+            eprintln!("  {}", cause.to_string().dimmed());
+        }
         std::process::exit(1);
     }
 }
