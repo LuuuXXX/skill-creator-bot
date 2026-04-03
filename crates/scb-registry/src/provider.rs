@@ -42,7 +42,7 @@ pub enum PreflightError {
     /// The user is not authenticated with the registry.
     NotAuthenticated,
     /// Any other preflight failure (carries the raw source error).
-    Other(Box<dyn std::error::Error + Send + Sync>),
+    Other(anyhow::Error),
 }
 
 impl std::fmt::Display for PreflightError {
@@ -50,9 +50,9 @@ impl std::fmt::Display for PreflightError {
         match self {
             Self::CliNotFound(cmd) => write!(f, "CliNotFound({})", cmd),
             Self::NotAuthenticated => write!(f, "NotAuthenticated"),
-            // Display is intentionally structural so the inner OS/tool error
-            // appears only once (via source()), preventing duplicate cause lines
-            // when anyhow walks the error chain.
+            // Display is intentionally structural so user-facing wording comes
+            // from i18n rather than the inner error text. The inner error is
+            // still available via source() for diagnostic chain display.
             Self::Other(_) => write!(f, "Other"),
         }
     }
@@ -61,6 +61,9 @@ impl std::fmt::Display for PreflightError {
 impl std::error::Error for PreflightError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
+            // Expose the underlying anyhow error chain via source() so that
+            // callers using the standard Error::source() traversal can still
+            // walk the cause chain.
             Self::Other(e) => Some(e.as_ref()),
             Self::CliNotFound(_) | Self::NotAuthenticated => None,
         }

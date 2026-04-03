@@ -24,7 +24,7 @@ impl RegistryProvider for ClawHubProvider {
         let output = Command::new("clawhub")
             .arg("whoami")
             .output()
-            .map_err(|e| PreflightError::Other(Box::new(e)))?;
+            .map_err(|e| PreflightError::Other(anyhow::Error::from(e)))?;
 
         if !output.status.success() {
             return Err(PreflightError::NotAuthenticated);

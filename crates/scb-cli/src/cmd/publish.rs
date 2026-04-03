@@ -76,8 +76,7 @@ pub fn run(args: PublishArgs, i18n: &I18n) -> anyhow::Result<()> {
             PreflightError::NotAuthenticated => {
                 anyhow::anyhow!(i18n.t("publish.not_logged_in").into_owned())
             }
-            PreflightError::Other(err) => anyhow::Error::new(PreflightError::Other(err))
-                .context(i18n.t("publish.failed").into_owned()),
+            PreflightError::Other(err) => err.context(i18n.t("publish.failed").into_owned()),
         });
     }
 
