@@ -18,14 +18,7 @@ impl RegistryProvider for ClawHubProvider {
 
     fn preflight(&self) -> Result<(), PreflightError> {
         // 1. Ensure `clawhub` binary is available.
-        which("clawhub").map_err(|_| {
-            PreflightError::CliNotFound(
-                "The `clawhub` CLI is not installed or not found in PATH.\n  \
-                 Install it with:  npm i -g clawhub\n  \
-                 Then log in with: clawhub login"
-                    .to_string(),
-            )
-        })?;
+        which("clawhub").map_err(|_| PreflightError::CliNotFound("clawhub".to_string()))?;
 
         // 2. Verify the user is logged in by running `clawhub whoami`.
         let output = Command::new("clawhub")
@@ -34,11 +27,7 @@ impl RegistryProvider for ClawHubProvider {
             .map_err(|e| PreflightError::Other(Box::new(e)))?;
 
         if !output.status.success() {
-            return Err(PreflightError::NotAuthenticated(
-                "You are not logged in to ClawHub.\n\
-                 Run `clawhub login` to authenticate, then try again."
-                    .to_string(),
-            ));
+            return Err(PreflightError::NotAuthenticated);
         }
 
         Ok(())

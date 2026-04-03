@@ -19,7 +19,7 @@ pub enum TuiError {
 impl std::fmt::Display for TuiError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            TuiError::NotImplemented => write!(f, "tui_not_implemented"),
+            TuiError::NotImplemented => write!(f, "The TUI has not been implemented yet."),
         }
     }
 }

@@ -60,7 +60,7 @@ pub fn run(args: PublishArgs, i18n: &I18n) -> anyhow::Result<()> {
         // the primary localized line is always the first thing the user sees.
         let localized = match &e {
             PreflightError::CliNotFound(_) => i18n.t("publish.clawhub_not_found").to_string(),
-            PreflightError::NotAuthenticated(_) => i18n.t("publish.not_logged_in").to_string(),
+            PreflightError::NotAuthenticated => i18n.t("publish.not_logged_in").to_string(),
             PreflightError::Other(msg) => format!("{}\n  {}", i18n.t("publish.failed"), msg),
         };
         anyhow::bail!(localized);

@@ -37,9 +37,10 @@ pub struct PublishResult {
 #[derive(Debug)]
 pub enum PreflightError {
     /// The required CLI tool is not installed or not in PATH.
+    /// Carries the name of the missing command (e.g. `"clawhub"`) as structured data.
     CliNotFound(String),
     /// The user is not authenticated with the registry.
-    NotAuthenticated(String),
+    NotAuthenticated,
     /// Any other preflight failure (carries the raw source error).
     Other(Box<dyn std::error::Error + Send + Sync>),
 }
@@ -47,7 +48,8 @@ pub enum PreflightError {
 impl std::fmt::Display for PreflightError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::CliNotFound(msg) | Self::NotAuthenticated(msg) => write!(f, "{}", msg),
+            Self::CliNotFound(cmd) => write!(f, "CLI not found: {}", cmd),
+            Self::NotAuthenticated => write!(f, "not authenticated"),
             Self::Other(e) => write!(f, "{}", e),
         }
     }
