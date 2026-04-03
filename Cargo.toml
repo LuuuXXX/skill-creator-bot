@@ -27,3 +27,5 @@ anyhow = "1"
 colored = "2"
 # Process execution
 which = "4"
+# SemVer parsing
+semver = "1"

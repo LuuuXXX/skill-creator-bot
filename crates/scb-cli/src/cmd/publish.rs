@@ -6,6 +6,13 @@ use scb_registry::provider::{PreflightError, PublishMetadata, RegistryProvider};
 use scb_registry::ClawHubProvider;
 use std::path::PathBuf;
 
+/// Parse and validate a string as a SemVer version.
+fn parse_semver(s: &str) -> Result<String, String> {
+    semver::Version::parse(s)
+        .map(|_| s.to_string())
+        .map_err(|e| format!("invalid SemVer version '{}': {}", s, e))
+}
+
 #[derive(Args)]
 pub struct PublishArgs {
     /// Path to the skill directory (default: current directory)
@@ -25,7 +32,7 @@ pub struct PublishArgs {
     pub name: String,
 
     /// Semantic version (e.g. 1.0.0)
-    #[arg(long)]
+    #[arg(long, value_parser = parse_semver)]
     pub version: String,
 
     /// Changelog / release notes

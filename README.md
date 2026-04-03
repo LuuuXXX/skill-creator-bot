@@ -104,8 +104,9 @@ Publish metadata (slug, version, URL) is saved back into `scb.project.json`.
 > ⚠️ Full packaging is a stub in this release. It will call `scripts/package_skill.py` in a future PR.
 >
 > To experiment with packaging before it is fully wired up, create a script at `./my-skill/scripts/package_skill.py`.
-> That script should package your skill for distribution (for example, by collecting required files and producing an archive) according to your target registry's requirements.
-> You are free to design this script to match your own build and deployment workflow.
+> The expected script interface follows the same convention as `skills/skill-creator/scripts/package_skill.py` in the upstream ClawHub repository:
+> it should accept no mandatory arguments, collect all required skill files, and produce a distributable archive (e.g. a `.tar.gz` or `.zip`) in the skill root.
+> Refer to the upstream script as the reference implementation to ensure your bundle is compatible with the ClawHub registry.
 
 ```bash
 scb package --path ./my-skill
