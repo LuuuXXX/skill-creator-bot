@@ -70,8 +70,8 @@ pub fn run(args: PublishArgs, i18n: &I18n) -> anyhow::Result<()> {
         // For Other, preserve the underlying OS/tool error as a chain source so
         // main's layered display can show it as an indented technical detail.
         return Err(match e {
-            PreflightError::CliNotFound(_) => {
-                anyhow::anyhow!(i18n.t("publish.clawhub_not_found").into_owned())
+            PreflightError::CliNotFound(cmd) => {
+                anyhow::anyhow!(i18n.t("publish.cli_not_found").replace("{command}", &cmd))
             }
             PreflightError::NotAuthenticated => {
                 anyhow::anyhow!(i18n.t("publish.not_logged_in").into_owned())

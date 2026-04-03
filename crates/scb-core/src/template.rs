@@ -33,9 +33,12 @@ pub fn scaffold_skill(
 
     // Generate scb.project.json — canonicalize so the stored path is absolute
     // and independent of the working directory from which scb was invoked.
+    // `dunce::canonicalize` is used instead of `std::fs::canonicalize` so that
+    // Windows verbatim paths (\\?\...) are normalized to regular paths before
+    // being persisted, preventing downstream tooling from mishandling them.
     // The directory was just created, so canonicalize should always succeed;
     // we fail fast rather than silently falling back to a relative path.
-    let canonical_dir = skill_dir.canonicalize()?;
+    let canonical_dir = dunce::canonicalize(&skill_dir)?;
     let mut project = ProjectConfig::new(skill_name, canonical_dir.clone());
     // Persist the language in project config for future use.
     project.lang = lang.clone();

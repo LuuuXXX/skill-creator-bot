@@ -62,9 +62,11 @@ pub fn run(args: PackageArgs, i18n: &I18n) -> anyhow::Result<()> {
     }
 
     // Canonicalize the skill path so the printed command is correct regardless
-    // of the user's working directory.  Fall back to the original path when the
-    // directory does not yet exist (e.g. used with a future `--path` value).
-    let skill_dir = std::fs::canonicalize(&args.path).unwrap_or_else(|_| args.path.clone());
+    // of the user's working directory. `dunce::canonicalize` is used instead of
+    // `std::fs::canonicalize` to avoid Windows verbatim paths (\\?\...) in the
+    // printed command hint. Fall back to the original path when the directory
+    // does not yet exist (e.g. used with a future `--path` value).
+    let skill_dir = dunce::canonicalize(&args.path).unwrap_or_else(|_| args.path.clone());
     let script_path = skill_dir.join("scripts").join("package_skill.py");
     // Wrap the script path in double quotes so the suggested command is
     // copy/paste-able even when the path contains spaces. Only escape embedded

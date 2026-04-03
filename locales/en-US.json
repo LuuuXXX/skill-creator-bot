@@ -33,7 +33,7 @@
   "publish.url": "Skill URL: {url}",
   "publish.slug": "Slug: {slug}",
   "publish.unknown_registry": "Unknown registry '{registry}'. Supported: clawhub",
-  "publish.clawhub_not_found": "`clawhub` command not found.\nInstall it with: npm i -g clawhub\nThen log in with: clawhub login",
+  "publish.cli_not_found": "'{command}' command not found. Make sure it is installed and available in PATH.",
   "publish.not_logged_in": "You are not logged in to ClawHub.\nRun `clawhub login` to authenticate, then try again.",
   "publish.failed": "Publish failed:",
   "publish.saved": "Publish metadata saved to scb.project.json.",

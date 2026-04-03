@@ -29,3 +29,5 @@ colored = "2"
 which = "4"
 # SemVer parsing
 semver = "1"
+# Windows verbatim-path normalization
+dunce = "1"
