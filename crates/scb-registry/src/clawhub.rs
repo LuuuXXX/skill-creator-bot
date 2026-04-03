@@ -5,6 +5,17 @@ use which::which;
 
 use crate::provider::{PreflightError, PublishMetadata, PublishResult, RegistryProvider};
 
+/// Substrings (lowercased) that identify a `clawhub whoami` failure as an
+/// authentication error rather than a generic tool/environment failure.
+const AUTH_ERROR_SIGNALS: &[&str] = &[
+    "not logged",
+    "not authenticated",
+    "unauthenticated",
+    "unauthorized",
+    "please login",
+    "please log in",
+];
+
 /// Registry provider that delegates to the `clawhub` CLI tool.
 ///
 /// Install with:  npm i -g clawhub
@@ -27,7 +38,36 @@ impl RegistryProvider for ClawHubProvider {
             .map_err(|e| PreflightError::Other(anyhow::Error::from(e)))?;
 
         if !output.status.success() {
-            return Err(PreflightError::NotAuthenticated);
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            let stdout = String::from_utf8_lossy(&output.stdout);
+            let stderr_str = stderr.trim();
+            let stdout_str = stdout.trim();
+
+            // Prefer stderr for diagnostics; fall back to stdout.
+            let diagnostic = if !stderr_str.is_empty() {
+                stderr_str
+            } else {
+                stdout_str
+            };
+
+            if diagnostic.is_empty() {
+                // No output from `clawhub whoami` — most likely the user is not
+                // logged in (the typical case for an unauthenticated whoami).
+                return Err(PreflightError::NotAuthenticated);
+            }
+
+            // Inspect the output for known authentication-error signals.
+            // Any other failure (corrupted config, incompatible CLI version,
+            // network error) is returned as Other with the raw diagnostic
+            // attached so the CLI layer can display it as a technical detail.
+            let lower = diagnostic.to_lowercase();
+            let is_auth_error = AUTH_ERROR_SIGNALS.iter().any(|s| lower.contains(s));
+
+            if is_auth_error {
+                return Err(PreflightError::NotAuthenticated);
+            }
+
+            return Err(PreflightError::Other(anyhow::anyhow!("{}", diagnostic)));
         }
 
         Ok(())
