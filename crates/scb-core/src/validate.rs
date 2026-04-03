@@ -84,6 +84,20 @@ impl ValidationResult {
 
 /// Validate the skill directory structure and content.
 pub fn validate_skill(skill_dir: &Path) -> anyhow::Result<ValidationResult> {
+    // Verify that skill_dir exists and is a directory before checking its
+    // contents.  Propagating the raw std::io::Error here (e.g. NotFound) lets
+    // the CLI's validate.check_failed context fire with an accurate message
+    // rather than producing a misleading SkillMdNotFound error for a path
+    // that doesn't exist at all.
+    let meta = std::fs::metadata(skill_dir)?;
+    if !meta.is_dir() {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            format!("'{}' is not a directory", skill_dir.display()),
+        )
+        .into());
+    }
+
     let mut result = ValidationResult::default();
 
     // Check SKILL.md exists
@@ -212,6 +226,18 @@ mod tests {
         .unwrap();
         let evals = r#"{"version":"1","evals":[]}"#;
         fs::write(dir.join("evals").join("evals.json"), evals).unwrap();
+    }
+
+    #[test]
+    fn test_nonexistent_dir_returns_io_error() {
+        let tmp = tempfile::tempdir().unwrap();
+        let nonexistent = tmp.path().join("does_not_exist");
+        let err = validate_skill(&nonexistent).unwrap_err();
+        // Should propagate a raw I/O error (NotFound), not produce SkillMdNotFound.
+        assert!(
+            err.downcast_ref::<std::io::Error>().is_some(),
+            "Expected std::io::Error, got: {err}"
+        );
     }
 
     #[test]

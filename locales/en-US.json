@@ -1,5 +1,5 @@
 {
-  "init.invalid_skill_name": "Invalid skill name '{name}': must be a single plain directory name (no '/', '\\\\', or '..')",
+  "init.invalid_skill_name": "Invalid skill name '{name}': must be non-empty, contain no path separators ('/' or '\\\\'), and not be '.' or '..'",
   "init.creating": "Creating skill directory...",
   "init.success": "Skill created successfully:",
   "init.already_exists": "Directory already exists:",

@@ -1,5 +1,5 @@
 {
-  "init.invalid_skill_name": "技能名称 '{name}' 无效：必须是一个简单的目录名（不能包含 '/'、'\\\\' 或 '..'）",
+  "init.invalid_skill_name": "技能名称 '{name}' 无效：不能为空、不能包含路径分隔符（'/' 或 '\\\\'），且不能为 '.' 或 '..'",
   "init.creating": "正在创建技能目录...",
   "init.success": "技能已成功创建：",
   "init.already_exists": "目录已存在：",
