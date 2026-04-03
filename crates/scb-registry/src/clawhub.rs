@@ -54,7 +54,20 @@ impl RegistryProvider for ClawHubProvider {
 
         if !output.status.success() {
             let stderr = String::from_utf8_lossy(&output.stderr);
-            anyhow::bail!("{}", stderr.trim());
+            let stdout = String::from_utf8_lossy(&output.stdout);
+            let stderr = stderr.trim();
+            let stdout = stdout.trim();
+
+            if !stderr.is_empty() {
+                anyhow::bail!("{}", stderr);
+            } else if !stdout.is_empty() {
+                anyhow::bail!("{}", stdout);
+            } else {
+                match output.status.code() {
+                    Some(code) => anyhow::bail!("`clawhub publish` failed with exit status {}", code),
+                    None => anyhow::bail!("`clawhub publish` was terminated by signal"),
+                }
+            }
         }
 
         let stdout = String::from_utf8_lossy(&output.stdout);

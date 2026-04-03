@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use std::borrow::Cow;
 use std::collections::HashMap;
 
 /// Supported UI languages.
@@ -62,13 +63,17 @@ impl I18n {
         }
     }
 
-    /// Look up a message key, falling back to the key itself if missing.
+    /// Look up a message key.
     ///
-    /// The explicit shared lifetime ensures the compiler knows the return value
-    /// may come from either `self.messages` or the `key` argument — both need
-    /// to outlive the returned `&str`.
-    pub fn t<'a>(&'a self, key: &'a str) -> &'a str {
-        self.messages.get(key).map(|s| s.as_str()).unwrap_or(key)
+    /// Returns a borrowed `&str` from the internal message map when the key is
+    /// found, or an owned copy of the key itself as a fallback.  Using
+    /// `Cow<'_, str>` decouples the return-value lifetime from the `key`
+    /// argument, so callers can pass temporaries (e.g. `i18n.t(&format!(…))`).
+    pub fn t<'a>(&'a self, key: &str) -> Cow<'a, str> {
+        match self.messages.get(key) {
+            Some(val) => Cow::Borrowed(val.as_str()),
+            None => Cow::Owned(key.to_owned()),
+        }
     }
 
     pub fn lang(&self) -> &Lang {

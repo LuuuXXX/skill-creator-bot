@@ -61,7 +61,11 @@ pub fn run(args: PackageArgs, i18n: &I18n) -> anyhow::Result<()> {
         }
     }
 
-    let script_path = args.path.join("scripts").join("package_skill.py");
+    // Canonicalize the skill path so the printed command is correct regardless
+    // of the user's working directory.  Fall back to the original path when the
+    // directory does not yet exist (e.g. used with a future `--path` value).
+    let skill_dir = std::fs::canonicalize(&args.path).unwrap_or_else(|_| args.path.clone());
+    let script_path = skill_dir.join("scripts").join("package_skill.py");
     let hint = i18n
         .t("package.python_hint")
         .replace("{path}", &script_path.to_string_lossy())

@@ -45,6 +45,7 @@
   "eval.run_start": "Starting eval run (engine: {engine})...",
   "eval.run_item": "Running eval: {id}",
   "eval.run_done": "All evals completed.",
+  "eval.run_some_failed": "One or more evals failed.",
   "eval.run_failed": "Eval {id} failed: {error}",
   "eval.skip_hint": "Tip: use --skip to skip eval running.",
   "eval.engine_missing_command": "When using --engine custom, you must also provide --engine-command <command>",

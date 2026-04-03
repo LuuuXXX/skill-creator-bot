@@ -96,12 +96,14 @@ fn run_evals(args: EvalRunArgs, i18n: &I18n) -> anyhow::Result<()> {
 
     match runner.run_all(&schema) {
         Ok(results) => {
+            let mut any_failed = false;
             for r in &results {
                 let msg = i18n.t("eval.run_item").replace("{id}", &r.eval_id);
                 let success = r.exit_code == Some(0);
                 if success {
                     println!("  {} {}", "✔".green(), msg);
                 } else {
+                    any_failed = true;
                     let code_str = r
                         .exit_code
                         .map(|c| c.to_string())
@@ -112,6 +114,9 @@ fn run_evals(args: EvalRunArgs, i18n: &I18n) -> anyhow::Result<()> {
                         .replace("{error}", &format!("exit code {}", code_str));
                     println!("  {} {}", "✖".red(), fail);
                 }
+            }
+            if any_failed {
+                anyhow::bail!("{}", i18n.t("eval.run_some_failed"));
             }
             println!("{}", i18n.t("eval.run_done").green().bold());
         }

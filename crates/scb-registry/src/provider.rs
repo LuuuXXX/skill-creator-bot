@@ -48,14 +48,21 @@ pub enum PreflightError {
 impl std::fmt::Display for PreflightError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::CliNotFound(cmd) => write!(f, "CLI not found: {}", cmd),
-            Self::NotAuthenticated => write!(f, "not authenticated"),
+            Self::CliNotFound(cmd) => write!(f, "CliNotFound({})", cmd),
+            Self::NotAuthenticated => write!(f, "NotAuthenticated"),
             Self::Other(e) => write!(f, "{}", e),
         }
     }
 }
 
-impl std::error::Error for PreflightError {}
+impl std::error::Error for PreflightError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::Other(e) => Some(e.as_ref()),
+            Self::CliNotFound(_) | Self::NotAuthenticated => None,
+        }
+    }
+}
 
 /// Trait that every registry provider must implement.
 ///

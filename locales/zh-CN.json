@@ -45,6 +45,7 @@
   "eval.run_start": "开始运行评测（使用引擎：{engine}）...",
   "eval.run_item": "运行评测：{id}",
   "eval.run_done": "所有评测已完成。",
+  "eval.run_some_failed": "一个或多个评测失败。",
   "eval.run_failed": "评测 {id} 失败：{error}",
   "eval.skip_hint": "提示：可使用 --skip 跳过评测运行。",
   "eval.engine_missing_command": "使用 --engine custom 时，必须同时提供 --engine-command <command>",
